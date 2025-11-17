@@ -185,6 +185,6 @@ MIT License - see [LICENSE](LICENSE) file.
 
 ---
 
-**Status**: 🚧 Active development toward v1.0
+**Status**: Active development toward v1.0
 
-**Contact**: [your-email] | [Twitter/X handle]
+[Contact](brieuc@bdelaf.com)
