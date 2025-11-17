@@ -166,10 +166,10 @@ MIT License - see [LICENSE](LICENSE) file.
 
 **Citation:**
 ```bibtex
-@software{g2forge2024,
+@software{g2forge2025,
   title={g2-forge: Neural Construction of Exceptional Holonomy Metrics},
-  author={[Your Name]},
-  year={2024},
+  author={[Brieuc de La Fournière]},
+  year={2025},
   url={https://github.com/gift-framework/g2-forge}
 }
 ```
