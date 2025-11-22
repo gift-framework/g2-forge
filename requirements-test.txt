@@ -1,0 +1,12 @@
+# Test dependencies for g2-forge
+# Install with: pip install -r requirements-test.txt
+
+# Testing framework
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-xdist>=3.3.0  # For parallel test execution
+
+# Core dependencies (if not already installed)
+torch>=2.0.0
+numpy>=1.24.0
+scipy>=1.10.0
