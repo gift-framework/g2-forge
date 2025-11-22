@@ -12,12 +12,11 @@ from typing import Dict, Any
 
 # Import g2-forge components
 import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, '/home/user/g2-forge')
 
-import g2_forge as g2
-from g2_forge.trainer import Trainer
-from g2_forge.config import G2ForgeConfig
+import g2forge as g2
+from g2forge.training.trainer import Trainer
+from g2forge.utils.config import G2ForgeConfig
 
 
 # ============================================================================
@@ -250,7 +249,7 @@ def test_harmonic_network_forward_speed(benchmark_config_small):
 @pytest.mark.benchmark
 def test_exterior_derivative_performance():
     """Benchmark exterior derivative operator."""
-    from g2_forge.operators import exterior_derivative_3
+    from g2forge.operators import exterior_derivative_3
 
     batch_size = 100
     phi = torch.randn(batch_size, 7, 7, 7)
@@ -269,7 +268,7 @@ def test_exterior_derivative_performance():
 @pytest.mark.benchmark
 def test_hodge_star_performance():
     """Benchmark Hodge star operator."""
-    from g2_forge.operators import hodge_star_3, levi_civita_tensor
+    from g2forge.operators import hodge_star_3, levi_civita_tensor
 
     batch_size = 100
     phi = torch.randn(batch_size, 7, 7, 7)

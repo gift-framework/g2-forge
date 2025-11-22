@@ -10,18 +10,15 @@ import numpy as np
 
 # Import g2-forge components
 import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, '/home/user/g2-forge')
 
-import g2_forge as g2
-from g2_forge.trainer import Trainer
-from g2_forge.config import G2ForgeConfig, TCSParameters
-from g2_forge.operators import (
-    levi_civita_tensor,
-    exterior_derivative_3,
-    hodge_star_3,
-)
-from g2_forge.networks import PhiNetwork, HarmonicNetwork
+import g2forge as g2
+from g2forge.training.trainer import Trainer
+from g2forge.utils.config import G2ForgeConfig, TCSParameters
+
+# Note: Some operators may need to be imported when they're available in the codebase
+# from g2forge.operators import levi_civita_tensor, exterior_derivative_3, hodge_star_3
+# from g2forge.networks import PhiNetwork, HarmonicNetwork
 
 
 # ============================================================================
@@ -161,7 +158,7 @@ def test_mixed_scale_coordinates():
 @pytest.mark.edge_case
 def test_nearly_degenerate_metric():
     """Test Hodge star with nearly degenerate metric."""
-    from g2_forge.operators import hodge_star_3, levi_civita_tensor
+    from g2forge.operators import hodge_star_3, levi_civita_tensor
 
     batch_size = 10
     phi = torch.randn(batch_size, 7, 7, 7)
@@ -182,7 +179,7 @@ def test_nearly_degenerate_metric():
 @pytest.mark.edge_case
 def test_identity_metric_hodge_star():
     """Test Hodge star with exactly identity metric."""
-    from g2_forge.operators import hodge_star_3, levi_civita_tensor
+    from g2forge.operators import hodge_star_3, levi_civita_tensor
 
     batch_size = 10
     phi = torch.randn(batch_size, 7, 7, 7)
@@ -198,7 +195,7 @@ def test_identity_metric_hodge_star():
 @pytest.mark.edge_case
 def test_scaled_metric():
     """Test operators with uniformly scaled metric."""
-    from g2_forge.operators import hodge_star_3, levi_civita_tensor
+    from g2forge.operators import hodge_star_3, levi_civita_tensor
 
     batch_size = 10
     phi = torch.randn(batch_size, 7, 7, 7)
@@ -347,7 +344,7 @@ def test_harmonic_forms_with_b2_equals_1():
 @pytest.mark.edge_case
 def test_harmonic_forms_orthogonality_minimal():
     """Test Gram matrix with minimal b₂."""
-    from g2_forge.losses import gram_matrix_loss
+    from g2forge.losses import gram_matrix_loss
 
     # Just 2 harmonic forms
     h2 = torch.randn(50, 2, 21)
@@ -405,7 +402,7 @@ def test_training_with_single_sample():
 @pytest.mark.edge_case
 def test_k7_regions_at_extremes():
     """Test region weights at extreme coordinates."""
-    from g2_forge.manifolds import K7Manifold
+    from g2forge.manifolds import K7Manifold
 
     tcs = TCSParameters(b2_m1=3, b3_m1=10, b2_m2=2, b3_m2=10)
     k7 = K7Manifold(tcs, device='cpu')
@@ -426,7 +423,7 @@ def test_k7_regions_at_extremes():
 @pytest.mark.edge_case
 def test_k7_transition_exactly_at_boundary():
     """Test region weights exactly at transition boundaries."""
-    from g2_forge.manifolds import K7Manifold
+    from g2forge.manifolds import K7Manifold
 
     tcs = TCSParameters(b2_m1=3, b3_m1=10, b2_m2=2, b3_m2=10)
     k7 = K7Manifold(tcs, device='cpu')
