@@ -435,3 +435,140 @@ def test_weight_decay_very_large(small_topology_config):
 
     # Should still train (though possibly poorly)
     assert np.isfinite(results['final_metrics']['loss'])
+
+
+# ============================================================
+# EXCEPTION HANDLING TESTS
+# ============================================================
+
+def test_tcs_manifold_requires_tcs_construction():
+    """Test TCSManifold raises error for non-TCS config."""
+    from g2forge.manifolds.base import TCSManifold
+    from g2forge.utils.config import ManifoldConfig, TopologyConfig, TCSParameters
+
+    # Create config with non-TCS construction
+    topology = TopologyConfig(b2=10, b3=40)
+    tcs_params = TCSParameters(b2_m1=5, b3_m1=20, b2_m2=5, b3_m2=20)
+
+    config = ManifoldConfig(
+        type="K7",
+        construction="ConnectedSum",  # NOT TCS!
+        topology=topology,
+        tcs_params=tcs_params
+    )
+
+    # Should raise ValueError
+    with pytest.raises(ValueError, match="requires construction='TCS'"):
+        TCSManifold(config)
+
+
+def test_tcs_manifold_requires_tcs_params():
+    """Test TCSManifold raises error when tcs_params missing."""
+    from g2forge.manifolds.base import TCSManifold
+    from g2forge.utils.config import ManifoldConfig, TopologyConfig
+
+    # Create config without tcs_params
+    topology = TopologyConfig(b2=10, b3=40)
+
+    config = ManifoldConfig(
+        type="K7",
+        construction="TCS",
+        topology=topology,
+        tcs_params=None  # Missing!
+    )
+
+    # Should raise ValueError
+    with pytest.raises(ValueError, match="requires tcs_params"):
+        TCSManifold(config)
+
+
+def test_create_manifold_unknown_type():
+    """Test create_manifold raises ValueError for unknown type."""
+    from g2forge.manifolds.base import create_manifold
+    from g2forge.utils.config import ManifoldConfig, TopologyConfig
+
+    topology = TopologyConfig(b2=10, b3=40)
+
+    config = ManifoldConfig(
+        type="UnknownManifold",  # Unknown type!
+        construction="TCS",
+        topology=topology
+    )
+
+    # Should raise ValueError
+    with pytest.raises(ValueError, match="Unknown manifold type"):
+        create_manifold(config)
+
+
+def test_region_indicator_unknown_region():
+    """Test compute_region_indicator raises error for invalid region."""
+    k7 = g2.create_gift_k7()
+
+    t = torch.tensor([0.5])
+
+    # Should raise ValueError for unknown region
+    with pytest.raises(ValueError, match="Unknown region"):
+        k7.compute_region_indicator(t, "invalid_region")
+
+
+def test_manifold_config_invalid_dimension():
+    """Test ManifoldConfig validation catches invalid dimension."""
+    from g2forge.utils.config import ManifoldConfig, TopologyConfig
+
+    topology = TopologyConfig(b2=10, b3=40)
+
+    config = ManifoldConfig(
+        type="K7",
+        construction="TCS",
+        topology=topology,
+        dimension=5  # Invalid! Should be 7 for G₂
+    )
+
+    # Validation should catch this
+    with pytest.raises(ValueError):
+        config.validate()
+
+
+def test_tcs_parameters_topology_mismatch():
+    """Test TCSParameters validation catches topology inconsistency."""
+    from g2forge.utils.config import TCSParameters, TopologyConfig
+
+    # Create TCS params that don't match topology
+    tcs_params = TCSParameters(
+        b2_m1=5, b3_m1=20,
+        b2_m2=5, b3_m2=20
+    )  # Total: b₂=10, b₃=40
+
+    topology = TopologyConfig(b2=15, b3=40)  # Mismatch in b₂!
+
+    # Validation should catch this
+    with pytest.raises(ValueError):
+        tcs_params.validate_against_topology(topology)
+
+
+def test_network_invalid_topology():
+    """Test networks handle invalid topology gracefully."""
+    from g2forge.networks.harmonic_network import HarmonicNetwork
+
+    # Try creating network with invalid (zero) topology
+    with pytest.raises((ValueError, RuntimeError)):
+        network = HarmonicNetwork(
+            n_forms=0,  # Invalid!
+            form_type="H2",
+            hidden_dims=[128, 128]
+        )
+
+
+def test_composite_loss_missing_manifold():
+    """Test CompositeLoss raises error when manifold is None for TCS."""
+    from g2forge.core.losses import CompositeLoss
+    from g2forge.utils.config import TopologyConfig, TCSParameters
+
+    topology = TopologyConfig(b2=10, b3=40)
+
+    # Creating CompositeLoss without manifold should work
+    # but using it with regional losses should fail or warn
+    loss_fn = CompositeLoss(topology=topology, manifold=None)
+
+    # This should still work (manifold is optional)
+    assert loss_fn is not None

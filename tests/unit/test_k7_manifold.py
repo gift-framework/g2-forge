@@ -391,3 +391,92 @@ def test_k7_different_topologies_same_interface():
         assert 'm1' in weights
         assert len(assoc) > 0
         assert len(coassoc) > 0
+
+
+# ============================================================
+# CYCLE SAMPLING TESTS
+# ============================================================
+
+def test_k7_sample_on_associative_cycle():
+    """Test sampling points on associative 3-cycles."""
+    k7 = g2.create_gift_k7()
+    cycles = k7.get_associative_cycles()
+
+    # Sample on first cycle
+    cycle = cycles[0]
+    n_samples = 256
+
+    coords = k7.sample_on_cycle(cycle, n_samples)
+
+    # Verify output shape
+    assert coords.shape == (n_samples, 7), f"Expected shape ({n_samples}, 7), got {coords.shape}"
+
+    # Verify it's a tensor
+    assert isinstance(coords, torch.Tensor)
+
+    # For associative 3-cycles, 3 coordinates vary, 4 are fixed
+    # Check that some coordinates have variation
+    std_devs = coords.std(dim=0)
+    varying_coords = (std_devs > 0.1).sum()
+    assert varying_coords >= 3, "At least 3 coordinates should vary in associative cycle"
+
+
+def test_k7_sample_on_coassociative_cycle():
+    """Test sampling points on coassociative 4-cycles."""
+    k7 = g2.create_gift_k7()
+    cycles = k7.get_coassociative_cycles()
+
+    # Sample on first cycle
+    cycle = cycles[0]
+    n_samples = 256
+
+    coords = k7.sample_on_cycle(cycle, n_samples)
+
+    # Verify output shape
+    assert coords.shape == (n_samples, 7), f"Expected shape ({n_samples}, 7), got {coords.shape}"
+
+    # For coassociative 4-cycles, 4 coordinates vary, 3 are fixed
+    std_devs = coords.std(dim=0)
+    varying_coords = (std_devs > 0.1).sum()
+    assert varying_coords >= 4, "At least 4 coordinates should vary in coassociative cycle"
+
+
+def test_k7_sample_on_cycle_different_n_samples():
+    """Test sampling with different sample counts."""
+    k7 = g2.create_gift_k7()
+    cycles = k7.get_associative_cycles()
+    cycle = cycles[0]
+
+    # Test different sample counts
+    for n_samples in [64, 128, 512, 1024]:
+        coords = k7.sample_on_cycle(cycle, n_samples)
+        assert coords.shape == (n_samples, 7), f"Failed for n_samples={n_samples}"
+
+
+def test_k7_sample_on_cycle_coordinate_ranges():
+    """Test sampled coordinates are in valid ranges."""
+    k7 = g2.create_gift_k7()
+
+    # Test associative cycles
+    assoc_cycles = k7.get_associative_cycles()
+    if len(assoc_cycles) > 0:
+        coords = k7.sample_on_cycle(assoc_cycles[0], n_samples=256)
+
+        # All coordinates should be finite
+        assert torch.all(torch.isfinite(coords)), "All coordinates should be finite"
+
+        # t-coordinate (index 0) should be in [0, 1]
+        assert torch.all(coords[:, 0] >= 0) and torch.all(coords[:, 0] <= 1), \
+            "t-coordinate should be in [0, 1]"
+
+    # Test coassociative cycles
+    coassoc_cycles = k7.get_coassociative_cycles()
+    if len(coassoc_cycles) > 0:
+        coords = k7.sample_on_cycle(coassoc_cycles[0], n_samples=256)
+
+        # All coordinates should be finite
+        assert torch.all(torch.isfinite(coords)), "All coordinates should be finite"
+
+        # t-coordinate should be in valid range
+        assert torch.all(coords[:, 0] >= 0) and torch.all(coords[:, 0] <= 1), \
+            "t-coordinate should be in [0, 1]"
