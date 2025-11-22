@@ -15,7 +15,13 @@ Comprehensive test suite for g2-forge, covering differential geometry operators,
 - ✅ **Trainer** (18 tests): Initialization, optimizer, scheduler, curriculum phases
 - ✅ **Integration** (25 tests): Training pipeline, gradient flow, universality end-to-end
 
-**Total**: ~160 tests implemented | **Coverage**: ~60%
+**Phase 3** (Integration & Regression) - ✅ **COMPLETE**:
+- ✅ **Checkpointing** (18 tests): Save/load, state restoration, resume training
+- ✅ **GIFT v1.0** (22 tests): Configuration, reproduction, expected behavior
+- ✅ **Numerical Precision** (13 tests): Operator precision, gradient stability
+- ✅ **Deterministic** (18 tests): Reproducibility with fixed seeds
+
+**Total**: ~210 tests implemented | **Coverage**: ~75%
 
 ## 🚀 Quick Start
 
@@ -72,12 +78,16 @@ tests/
 │   └── test_trainer.py         # 18 tests - Trainer components (NEW!)
 │
 ├── integration/
-│   └── test_training_pipeline.py  # 25 tests - Training workflows (NEW!)
+│   ├── test_training_pipeline.py   # 25 tests - Training workflows
+│   ├── test_checkpointing.py       # 18 tests - Checkpoint save/load (NEW!)
+│   └── test_gift_reproduction.py   # 22 tests - GIFT v1.0 (NEW!)
 │
-├── regression/                # (Future) Regression tests
+├── regression/
+│   ├── test_numerical_precision.py # 13 tests - Numerical stability (NEW!)
+│   └── test_deterministic.py       # 18 tests - Reproducibility (NEW!)
 │
 └── fixtures/
-    └── conftest.py            # Shared pytest fixtures
+    └── conftest.py                 # Shared pytest fixtures
 ```
 
 ## 🔬 Test Categories
@@ -126,7 +136,7 @@ tests/
 - **Curriculum**: Phase retrieval, transitions, loss weights
 - **Universality**: Different topologies work
 
-### Integration Tests (25 tests) - **NEW!**
+### Integration Tests (65 tests)
 
 #### Training Pipeline (`test_training_pipeline.py` - 25 tests)
 - **Basic Training**: Single epoch, multiple epochs, metrics, finite loss
@@ -137,6 +147,39 @@ tests/
 - **Reproducibility**: Deterministic with seed
 - **Metrics History**: Logging, epochs, components
 - **Error Handling**: Zero epochs
+
+#### Checkpointing (`test_checkpointing.py` - 18 tests) - **NEW!**
+- **Save/Load**: File creation, state restoration, all networks included
+- **Optimizer & Scheduler**: State preservation across save/load
+- **Resume Training**: Continue from checkpoint, state integrity
+- **Best Checkpoint**: Track lowest loss
+- **Compatibility**: Topology mismatch handling
+- **Roundtrip**: Complete save/load/resume cycle
+
+#### GIFT v1.0 Reproduction (`test_gift_reproduction.py` - 22 tests) - **NEW!**
+- **Configuration**: Correct topology (21,77), TCS parameters, 5 phases
+- **Training**: Initialization, short runs, metrics structure
+- **Expected Behavior**: Network sizes, loss function, region weights
+- **Parameters**: Optimizer (AdamW, lr=1e-4), training (batch=2048)
+- **Outcomes**: Torsion range, convergence behavior
+
+### Regression Tests (31 tests) - **NEW!**
+
+#### Numerical Precision (`test_numerical_precision.py` - 13 tests)
+- **Operator Precision**: Hodge star, exterior derivative, metric reconstruction
+- **Loss Precision**: Gram matrix, torsion losses
+- **Network Precision**: PhiNetwork, HarmonicNetworks
+- **Gradient Precision**: Through networks and operators
+- **Stability**: CPU precision, loss accumulation
+- **Boundary Values**: Near zero, large values
+
+#### Deterministic Behavior (`test_deterministic.py` - 18 tests)
+- **Network Determinism**: PhiNetwork, HarmonicNetworks with fixed seed
+- **Manifold Determinism**: Sampling, region weights
+- **Training Determinism**: Single step, multiple epochs, config seed
+- **Operator Determinism**: Hodge star, exterior derivative
+- **Initialization**: Network and optimizer parameters
+- **Sanity Check**: Different seeds → different results
 
 ## ✅ Key Tests
 
