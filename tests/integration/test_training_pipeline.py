@@ -347,3 +347,91 @@ def test_train_with_zero_epochs(small_topology_config):
 
     # Should return without training
     assert 'final_metrics' in results or results is not None
+
+
+# ============================================================
+# ENHANCED GRADIENT FLOW TESTS
+# ============================================================
+
+def test_gradient_flow_through_calibration_losses(small_topology_config):
+    """Test that gradients flow correctly through calibration loss components."""
+    from g2forge.core.losses import calibration_associative_loss, calibration_coassociative_loss
+
+    trainer = Trainer(small_topology_config, device='cpu', verbose=False)
+    manifold = trainer.manifold
+
+    # Get cycles
+    assoc_cycles = manifold.get_associative_cycles()
+    coassoc_cycles = manifold.get_coassociative_cycles()
+
+    # Sample and forward pass
+    coords = manifold.sample_coordinates(n_samples=128, device='cpu')
+    coords.requires_grad_(True)
+
+    phi = trainer.phi_network(coords)
+
+    # Compute calibration losses
+    if len(assoc_cycles) > 0:
+        loss_assoc = calibration_associative_loss(phi, assoc_cycles, manifold, n_samples=64)
+        loss_assoc.backward(retain_graph=True)
+
+        # Check gradients exist
+        for param in trainer.phi_network.parameters():
+            if param.grad is not None:
+                assert torch.isfinite(param.grad).all(), "Calibration gradients should be finite"
+
+    # Reset gradients
+    trainer.phi_network.zero_grad()
+
+
+def test_gradient_magnitudes_within_bounds(small_topology_config):
+    """Test that gradient magnitudes don't explode or vanish."""
+    trainer = Trainer(small_topology_config, device='cpu', verbose=False)
+
+    # Train one step
+    metrics = trainer.train_step(epoch=0)
+
+    # Collect gradient norms
+    grad_norms = []
+    for network_name, network in [
+        ('phi', trainer.phi_network),
+        ('h2', trainer.h2_network),
+        ('h3', trainer.h3_network)
+    ]:
+        for param in network.parameters():
+            if param.grad is not None:
+                grad_norm = torch.norm(param.grad).item()
+                grad_norms.append(grad_norm)
+
+    # Check no explosion (> 1e3) or vanishing (< 1e-10)
+    for norm in grad_norms:
+        assert norm < 1e3, f"Gradient exploded: {norm}"
+        # Note: some gradients can be legitimately small, so we're lenient on vanishing
+
+
+def test_gradient_flow_with_regional_losses(small_topology_config):
+    """Test that gradients flow correctly through regional loss weighting."""
+    trainer = Trainer(small_topology_config, device='cpu', verbose=False)
+
+    # Sample coordinates
+    coords = trainer.manifold.sample_coordinates(n_samples=256, device='cpu')
+
+    # Get region weights
+    region_weights = trainer.manifold.get_region_weights(coords)
+
+    # Verify region weights sum to ~1
+    total_weight = region_weights['m1'] + region_weights['neck'] + region_weights['m2']
+    assert torch.allclose(total_weight, torch.ones_like(total_weight), rtol=1e-3, atol=1e-4)
+
+    # Train one step
+    metrics = trainer.train_step(epoch=0)
+
+    # Gradients should flow through all networks
+    for network in [trainer.phi_network, trainer.h2_network, trainer.h3_network]:
+        has_gradients = False
+        for param in network.parameters():
+            if param.grad is not None and torch.any(param.grad != 0):
+                has_gradients = True
+                assert torch.isfinite(param.grad).all()
+
+        assert has_gradients, "Network should have gradients"

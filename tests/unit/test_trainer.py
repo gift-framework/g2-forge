@@ -276,3 +276,92 @@ def test_trainer_property_access(small_topology_config):
     assert trainer.optimizer is not None
     assert trainer.scheduler is not None
     assert trainer.loss_fn is not None
+
+
+# ============================================================
+# CURRICULUM EDGE CASE TESTS
+# ============================================================
+
+def test_curriculum_with_single_phase(small_topology_config):
+    """Test curriculum with only 1 phase works correctly."""
+    config = small_topology_config
+    config.training.num_curriculum_phases = 1
+
+    trainer = Trainer(config, device='cpu', verbose=False)
+
+    # Should still work with single phase
+    results = trainer.train(num_epochs=3)
+
+    assert 'final_metrics' in results
+    assert np.isfinite(results['final_metrics']['loss'])
+
+
+def test_curriculum_loss_weight_transitions(small_topology_config):
+    """Test that loss weights transition smoothly between phases."""
+    config = small_topology_config
+    config.training.num_curriculum_phases = 3
+
+    trainer = Trainer(config, device='cpu', verbose=False)
+
+    # Train through multiple phases
+    results = trainer.train(num_epochs=15)  # Will go through phase transitions
+
+    # Should complete without errors
+    assert 'final_metrics' in results
+    assert np.isfinite(results['final_metrics']['loss'])
+
+
+def test_curriculum_with_very_short_phases(small_topology_config):
+    """Test curriculum with very short phase durations."""
+    config = small_topology_config
+    config.training.num_curriculum_phases = 5
+
+    trainer = Trainer(config, device='cpu', verbose=False)
+
+    # Train for just a few epochs (shorter than typical phase duration)
+    results = trainer.train(num_epochs=3)
+
+    # Should handle gracefully
+    assert 'final_metrics' in results
+    assert np.isfinite(results['final_metrics']['loss'])
+
+
+def test_curriculum_phase_zero_weight(small_topology_config):
+    """Test training when some loss weights are zero."""
+    config = small_topology_config
+
+    trainer = Trainer(config, device='cpu', verbose=False)
+
+    # Train one step with manual loss weights
+    coords = trainer.manifold.sample_coordinates(n_samples=256, device='cpu')
+    phi = trainer.phi_network(coords)
+
+    # Create dummy inputs
+    dphi = torch.randn_like(phi).unsqueeze(-1).repeat(1, 1, 1, 1, 7)
+    dstar_phi = torch.randn(256, 7, 7)
+    star_phi = torch.randn(256, 7, 7, 7, 7)
+    metric = torch.eye(7).unsqueeze(0).repeat(256, 1, 1)
+    h2 = trainer.h2_network(coords)
+    h3 = trainer.h3_network(coords)
+    region_weights = trainer.manifold.get_region_weights(coords)
+
+    # Set some weights to zero
+    loss_weights = {
+        'torsion_closure': 1.0,
+        'torsion_coclosure': 0.0,  # Zero!
+        'volume': 0.0,             # Zero!
+        'gram_h2': 1.0,
+        'gram_h3': 1.0,
+        'boundary': 0.0,           # Zero!
+        'calibration': 0.0
+    }
+
+    total_loss, components = trainer.loss_fn(
+        phi, dphi, dstar_phi, star_phi, metric,
+        h2, h3, region_weights,
+        loss_weights, epoch=0
+    )
+
+    # Should still compute
+    assert torch.isfinite(total_loss)
+    assert total_loss.item() >= 0

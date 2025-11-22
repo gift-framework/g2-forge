@@ -18,6 +18,8 @@ from g2forge.core.losses import (
     volume_loss,
     gram_matrix_loss,
     boundary_smoothness_loss,
+    calibration_associative_loss,
+    calibration_coassociative_loss,
     AdaptiveLossScheduler,
     CompositeLoss,
 )
@@ -775,3 +777,111 @@ def test_boundary_smoothness_with_zero_region_weights():
 
     # Should handle gracefully (likely zero)
     assert torch.isfinite(loss)
+
+
+# ============================================================
+# CALIBRATION LOSS TESTS
+# ============================================================
+
+def test_calibration_associative_loss_with_cycles():
+    """Test associative calibration with valid cycles."""
+    from g2forge.manifolds.base import Cycle
+
+    # Create simple K7 manifold
+    manifold = g2.create_gift_k7()
+
+    batch_size = 5
+    phi = torch.randn(batch_size, 7, 7, 7)
+
+    # Get associative cycles from manifold
+    cycles = manifold.get_associative_cycles()
+
+    # Compute calibration loss
+    loss = calibration_associative_loss(phi, cycles, manifold, n_samples=128)
+
+    # Loss should be finite and non-negative
+    assert torch.isfinite(loss)
+    assert loss.item() >= 0
+
+
+def test_calibration_associative_loss_empty_cycles():
+    """Test associative calibration returns zero for empty cycle list."""
+    manifold = g2.create_gift_k7()
+
+    batch_size = 5
+    phi = torch.randn(batch_size, 7, 7, 7)
+
+    # Empty cycle list
+    cycles = []
+
+    # Should return zero
+    loss = calibration_associative_loss(phi, cycles, manifold, n_samples=128)
+
+    assert loss.item() == 0.0
+
+
+def test_calibration_coassociative_loss_with_cycles():
+    """Test coassociative calibration with valid cycles."""
+    from g2forge.manifolds.base import Cycle
+
+    # Create simple K7 manifold
+    manifold = g2.create_gift_k7()
+
+    batch_size = 5
+    star_phi = torch.randn(batch_size, 7, 7, 7, 7)
+
+    # Get coassociative cycles from manifold
+    cycles = manifold.get_coassociative_cycles()
+
+    # Compute calibration loss
+    loss = calibration_coassociative_loss(star_phi, cycles, manifold, n_samples=128)
+
+    # Loss should be finite and non-negative
+    assert torch.isfinite(loss)
+    assert loss.item() >= 0
+
+
+def test_calibration_coassociative_loss_empty_cycles():
+    """Test coassociative calibration returns zero for empty cycle list."""
+    manifold = g2.create_gift_k7()
+
+    batch_size = 5
+    star_phi = torch.randn(batch_size, 7, 7, 7, 7)
+
+    # Empty cycle list
+    cycles = []
+
+    # Should return zero
+    loss = calibration_coassociative_loss(star_phi, cycles, manifold, n_samples=128)
+
+    assert loss.item() == 0.0
+
+
+def test_calibration_losses_device_consistency():
+    """Test calibration losses work on CPU (and CUDA if available)."""
+    manifold = g2.create_gift_k7()
+    cycles_assoc = manifold.get_associative_cycles()
+    cycles_coassoc = manifold.get_coassociative_cycles()
+
+    batch_size = 3
+
+    # Test on CPU
+    phi_cpu = torch.randn(batch_size, 7, 7, 7, device='cpu')
+    star_phi_cpu = torch.randn(batch_size, 7, 7, 7, 7, device='cpu')
+
+    loss_assoc_cpu = calibration_associative_loss(phi_cpu, cycles_assoc, manifold, n_samples=64)
+    loss_coassoc_cpu = calibration_coassociative_loss(star_phi_cpu, cycles_coassoc, manifold, n_samples=64)
+
+    assert torch.isfinite(loss_assoc_cpu)
+    assert torch.isfinite(loss_coassoc_cpu)
+
+    # Test CUDA if available
+    if torch.cuda.is_available():
+        phi_cuda = phi_cpu.cuda()
+        star_phi_cuda = star_phi_cpu.cuda()
+
+        loss_assoc_cuda = calibration_associative_loss(phi_cuda, cycles_assoc, manifold, n_samples=64)
+        loss_coassoc_cuda = calibration_coassociative_loss(star_phi_cuda, cycles_coassoc, manifold, n_samples=64)
+
+        assert torch.isfinite(loss_assoc_cuda)
+        assert torch.isfinite(loss_coassoc_cuda)
