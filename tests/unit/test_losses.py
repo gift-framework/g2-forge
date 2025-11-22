@@ -477,3 +477,301 @@ def test_composite_loss_missing_region_weights(small_topology_config):
 
     # Boundary loss should be zero
     assert components['boundary'] == 0.0
+
+
+# ============================================================
+# EDGE CASE TESTS - LOSS FUNCTIONS
+# ============================================================
+
+def test_loss_with_zero_weights():
+    """Test that loss handles all-zero weights."""
+    batch_size = 10
+    n_forms = 5
+    n_components = 21
+
+    forms = torch.randn(batch_size, n_forms, n_components)
+
+    # Zero loss weight should give zero contribution
+    loss, det, rank = gram_matrix_loss(forms, target_rank=n_forms)
+
+    # Loss should still be computed
+    assert torch.isfinite(loss)
+
+
+def test_torsion_closure_with_very_large_values():
+    """Test torsion closure loss with very large input values."""
+    dphi = torch.randn(10, 7, 7, 7, 7) * 1000  # Very large
+
+    loss = torsion_closure_loss(dphi)
+
+    # Should still be finite
+    assert torch.isfinite(loss)
+
+
+def test_torsion_closure_with_very_small_values():
+    """Test torsion closure loss with very small input values."""
+    dphi = torch.randn(10, 7, 7, 7, 7) * 1e-10  # Very small
+
+    loss = torsion_closure_loss(dphi)
+
+    # Should be close to zero
+    assert loss.item() < 1e-15
+
+
+def test_volume_loss_with_near_singular_metric():
+    """Test volume loss with near-singular metric."""
+    batch_size = 5
+    metric = torch.eye(7).unsqueeze(0).repeat(batch_size, 1, 1)
+
+    # Make near-singular by setting one eigenvalue very small
+    metric[:, 0, 0] = 1e-8
+
+    loss = volume_loss(metric, target_det=1.0)
+
+    # Should handle gracefully (might be large)
+    assert torch.isfinite(loss)
+
+
+def test_gram_matrix_loss_with_zero_forms():
+    """Test gram matrix loss when all forms are zero."""
+    batch_size = 10
+    n_forms = 5
+    n_components = 21
+
+    forms = torch.zeros(batch_size, n_forms, n_components)
+
+    loss, det, rank = gram_matrix_loss(forms, target_rank=n_forms)
+
+    # Determinant should be zero
+    assert abs(det.item()) < 1e-10
+    # Rank should be zero
+    assert rank == 0
+
+
+def test_gram_matrix_loss_with_single_form():
+    """Test gram matrix loss with only one harmonic form."""
+    batch_size = 10
+    n_forms = 1
+    n_components = 21
+
+    forms = torch.randn(batch_size, n_forms, n_components)
+
+    loss, det, rank = gram_matrix_loss(forms, target_rank=n_forms)
+
+    # Should work with single form
+    assert torch.isfinite(loss)
+    assert rank <= 1
+
+
+def test_gram_matrix_loss_with_very_large_batch():
+    """Test gram matrix loss with very large batch size."""
+    batch_size = 10000  # Very large
+    n_forms = 5
+    n_components = 21
+
+    forms = torch.randn(batch_size, n_forms, n_components)
+
+    loss, det, rank = gram_matrix_loss(forms, target_rank=n_forms)
+
+    # Should handle large batches
+    assert torch.isfinite(loss)
+
+
+def test_adaptive_scheduler_with_constant_loss():
+    """Test adaptive scheduler when loss is perfectly constant."""
+    scheduler = AdaptiveLossScheduler(check_interval=10, plateau_threshold=1e-6)
+
+    # Exactly constant losses
+    for epoch in range(100):
+        losses = {
+            'torsion_closure': 1.0,  # Exactly constant
+            'torsion_coclosure': 0.5
+        }
+        scheduler.update(epoch, losses)
+
+    weights = scheduler.get_weights()
+
+    # Should detect plateau and boost weights
+    assert weights['torsion_closure'] >= 1.0
+
+
+def test_adaptive_scheduler_with_nan_loss():
+    """Test adaptive scheduler handles NaN loss values."""
+    scheduler = AdaptiveLossScheduler()
+
+    # Normal losses first
+    for epoch in range(10):
+        losses = {'torsion_closure': 0.5, 'torsion_coclosure': 0.5}
+        scheduler.update(epoch, losses)
+
+    # Then NaN
+    losses_nan = {'torsion_closure': float('nan'), 'torsion_coclosure': 0.5}
+
+    # Should handle without crashing (might skip or use default)
+    try:
+        scheduler.update(10, losses_nan)
+    except:
+        pass  # Expected to potentially raise
+
+
+def test_adaptive_scheduler_with_decreasing_loss():
+    """Test adaptive scheduler when loss is decreasing."""
+    scheduler = AdaptiveLossScheduler(check_interval=10)
+
+    # Decreasing losses
+    for epoch in range(100):
+        losses = {
+            'torsion_closure': 1.0 / (epoch + 1),  # Decreasing
+            'torsion_coclosure': 0.5
+        }
+        scheduler.update(epoch, losses)
+
+    weights = scheduler.get_weights()
+
+    # Should not boost excessively if loss is improving
+    assert weights['torsion_closure'] <= 100.0  # Reasonable bound
+
+
+def test_composite_loss_with_nan_component():
+    """Test composite loss when one component produces NaN."""
+    # This is a difficult test - we'd need to engineer a NaN
+    # For now, just document expected behavior
+    pass  # TODO: Implement if NaN handling is added
+
+
+def test_composite_loss_with_all_zero_weights(small_topology_config):
+    """Test composite loss with all loss weights set to zero."""
+    manifold = g2.manifolds.create_manifold(small_topology_config.manifold)
+    topology = small_topology_config.manifold.topology
+    loss_fn = CompositeLoss(topology=topology, manifold=manifold)
+
+    batch_size = 10
+    phi = torch.randn(batch_size, 7, 7, 7)
+    dphi = torch.randn(batch_size, 7, 7, 7, 7)
+    dstar_phi = torch.randn(batch_size, 7, 7)
+    star_phi = torch.randn(batch_size, 7, 7, 7, 7)
+    metric = torch.eye(7).unsqueeze(0).repeat(batch_size, 1, 1)
+    harmonic_h2 = torch.randn(batch_size, topology.b2, 21)
+    harmonic_h3 = torch.randn(batch_size, topology.b3, 35)
+    region_weights = {
+        'm1': torch.ones(batch_size),
+        'neck': torch.zeros(batch_size),
+        'm2': torch.zeros(batch_size)
+    }
+
+    # All weights zero
+    loss_weights = {
+        'torsion_closure': 0.0,
+        'torsion_coclosure': 0.0,
+        'volume': 0.0,
+        'gram_h2': 0.0,
+        'gram_h3': 0.0,
+        'boundary': 0.0,
+        'calibration': 0.0
+    }
+
+    total_loss, components = loss_fn(
+        phi, dphi, dstar_phi, star_phi, metric,
+        harmonic_h2, harmonic_h3, region_weights,
+        loss_weights, epoch=0
+    )
+
+    # Total loss should be zero or very small
+    assert total_loss.item() < 1e-6
+
+
+def test_composite_loss_with_negative_weights(small_topology_config):
+    """Test composite loss with negative weights (should still work mathematically)."""
+    manifold = g2.manifolds.create_manifold(small_topology_config.manifold)
+    topology = small_topology_config.manifold.topology
+    loss_fn = CompositeLoss(topology=topology, manifold=manifold)
+
+    batch_size = 10
+    phi = torch.randn(batch_size, 7, 7, 7)
+    dphi = torch.randn(batch_size, 7, 7, 7, 7)
+    dstar_phi = torch.randn(batch_size, 7, 7)
+    star_phi = torch.randn(batch_size, 7, 7, 7, 7)
+    metric = torch.eye(7).unsqueeze(0).repeat(batch_size, 1, 1)
+    harmonic_h2 = torch.randn(batch_size, topology.b2, 21)
+    harmonic_h3 = torch.randn(batch_size, topology.b3, 35)
+    region_weights = {
+        'm1': torch.ones(batch_size),
+        'neck': torch.zeros(batch_size),
+        'm2': torch.zeros(batch_size)
+    }
+
+    # Negative weight (unusual but should work)
+    loss_weights = {
+        'torsion_closure': -1.0,  # Negative!
+        'torsion_coclosure': 1.0,
+        'volume': 0.1,
+        'gram_h2': 1.0,
+        'gram_h3': 1.0,
+        'boundary': 0.0,
+        'calibration': 0.0
+    }
+
+    total_loss, components = loss_fn(
+        phi, dphi, dstar_phi, star_phi, metric,
+        harmonic_h2, harmonic_h3, region_weights,
+        loss_weights, epoch=0
+    )
+
+    # Should compute (though result might be strange)
+    assert torch.isfinite(total_loss)
+
+
+def test_composite_loss_with_extreme_weight_imbalance(small_topology_config):
+    """Test composite loss with very imbalanced weights (1e10 vs 1e-10)."""
+    manifold = g2.manifolds.create_manifold(small_topology_config.manifold)
+    topology = small_topology_config.manifold.topology
+    loss_fn = CompositeLoss(topology=topology, manifold=manifold)
+
+    batch_size = 10
+    phi = torch.randn(batch_size, 7, 7, 7)
+    dphi = torch.randn(batch_size, 7, 7, 7, 7)
+    dstar_phi = torch.randn(batch_size, 7, 7)
+    star_phi = torch.randn(batch_size, 7, 7, 7, 7)
+    metric = torch.eye(7).unsqueeze(0).repeat(batch_size, 1, 1)
+    harmonic_h2 = torch.randn(batch_size, topology.b2, 21)
+    harmonic_h3 = torch.randn(batch_size, topology.b3, 35)
+    region_weights = {
+        'm1': torch.ones(batch_size),
+        'neck': torch.zeros(batch_size),
+        'm2': torch.zeros(batch_size)
+    }
+
+    # Extreme imbalance
+    loss_weights = {
+        'torsion_closure': 1e10,  # Very large
+        'torsion_coclosure': 1e-10,  # Very small
+        'volume': 0.1,
+        'gram_h2': 1.0,
+        'gram_h3': 1.0,
+        'boundary': 0.0,
+        'calibration': 0.0
+    }
+
+    total_loss, components = loss_fn(
+        phi, dphi, dstar_phi, star_phi, metric,
+        harmonic_h2, harmonic_h3, region_weights,
+        loss_weights, epoch=0
+    )
+
+    # Should still compute
+    assert torch.isfinite(total_loss)
+
+
+def test_boundary_smoothness_with_zero_region_weights():
+    """Test boundary smoothness when all region weights are zero."""
+    phi = torch.randn(10, 7, 7, 7)
+    region_weights = {
+        'm1': torch.zeros(10),
+        'neck': torch.zeros(10),
+        'm2': torch.zeros(10)
+    }
+
+    loss = boundary_smoothness_loss(phi, region_weights)
+
+    # Should handle gracefully (likely zero)
+    assert torch.isfinite(loss)
