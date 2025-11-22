@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
 """
-Core differential geometry operations for G₂ manifolds.
+Core differential geometry operations for G2 manifolds.
 
 This module contains pure mathematical operators and loss functions
-that work for any G₂ manifold, not just GIFT-specific parameters.
+that work for any G2 manifold, not just GIFT-specific parameters.
 """
 
 from .operators import (

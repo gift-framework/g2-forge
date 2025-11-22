@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
 """
-G‚ manifold implementations.
+G2 manifold implementations.
 
 Provides abstract base classes and concrete implementations
-for various G‚ manifolds (K‡, Joyce, custom).
+for various G2 manifolds (K7, Joyce, custom).
 """
 
 from .base import (
