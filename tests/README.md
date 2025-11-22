@@ -4,13 +4,18 @@ Comprehensive test suite for g2-forge, covering differential geometry operators,
 
 ## 📊 Test Coverage
 
-**Phase 1 Implementation** (Critical Tests):
+**Phase 1** (Critical Tests) - ✅ **COMPLETE**:
 - ✅ **Operators** (27 tests): Levi-Civita, Hodge star, exterior derivative, metric reconstruction
 - ✅ **Losses** (23 tests): Torsion losses, Gram matrix universality, adaptive scheduling
 - ✅ **Networks** (25 tests): PhiNetwork, HarmonicNetwork antisymmetry, universality
 - ✅ **Configuration** (25 tests): TCS topology validation, serialization, universality
 
-**Total**: ~100 tests implemented
+**Phase 2** (High Priority) - ✅ **COMPLETE**:
+- ✅ **K7 Manifold** (27 tests): TCS construction, coordinate sampling, region weights
+- ✅ **Trainer** (18 tests): Initialization, optimizer, scheduler, curriculum phases
+- ✅ **Integration** (25 tests): Training pipeline, gradient flow, universality end-to-end
+
+**Total**: ~160 tests implemented | **Coverage**: ~60%
 
 ## 🚀 Quick Start
 
@@ -59,12 +64,16 @@ xdg-open htmlcov/index.html  # Linux
 ```
 tests/
 ├── unit/
-│   ├── test_operators.py      # 27 tests - Core differential operators
+│   ├── test_operators.py       # 27 tests - Core differential operators
 │   ├── test_losses.py          # 23 tests - Loss functions and universality
 │   ├── test_networks.py        # 25 tests - Neural network antisymmetry
-│   └── test_config.py          # 25 tests - Configuration and TCS validation
+│   ├── test_config.py          # 25 tests - Configuration and TCS validation
+│   ├── test_k7_manifold.py     # 27 tests - K7 TCS, sampling, regions (NEW!)
+│   └── test_trainer.py         # 18 tests - Trainer components (NEW!)
 │
-├── integration/               # (Future) Integration tests
+├── integration/
+│   └── test_training_pipeline.py  # 25 tests - Training workflows (NEW!)
+│
 ├── regression/                # (Future) Regression tests
 │
 └── fixtures/
@@ -73,7 +82,7 @@ tests/
 
 ## 🔬 Test Categories
 
-### Unit Tests (100 tests)
+### Unit Tests (145 tests)
 
 #### Operators (`test_operators.py` - 27 tests)
 - **Levi-Civita Tensor**: Shape, signs, permutations
@@ -102,6 +111,32 @@ tests/
 - **ManifoldConfig**: TCS consistency validation
 - **G2ForgeConfig**: GIFT v1.0 reproduction, serialization
 - **Universality**: Config system works for ANY topology
+
+#### K7 Manifold (`test_k7_manifold.py` - 27 tests) - **NEW!**
+- **Manifold Creation**: GIFT, custom, dimension, topology consistency
+- **Coordinate Sampling**: Shape, device, ranges, distribution
+- **Region Weights** (CRITICAL): Sum to 1, M1/Neck/M2 behavior, smoothness
+- **Cycles**: Associative, coassociative, index specifications
+- **Integration**: Full workflow, universality
+
+#### Trainer (`test_trainer.py` - 18 tests) - **NEW!**
+- **Initialization**: Networks, manifold, optimizer, scheduler, loss function
+- **Optimizer**: AdamW type, learning rate, weight decay, parameters
+- **Scheduler**: Warmup, cosine annealing
+- **Curriculum**: Phase retrieval, transitions, loss weights
+- **Universality**: Different topologies work
+
+### Integration Tests (25 tests) - **NEW!**
+
+#### Training Pipeline (`test_training_pipeline.py` - 25 tests)
+- **Basic Training**: Single epoch, multiple epochs, metrics, finite loss
+- **Curriculum Learning**: Phase transitions, loss weight changes
+- **Gradient Flow** (CRITICAL): Through all networks, no NaN/Inf
+- **Universality Integration** (CRITICAL): Training works for ANY topology
+- **Convergence**: 100-epoch tests, torsion reduction
+- **Reproducibility**: Deterministic with seed
+- **Metrics History**: Logging, epochs, components
+- **Error Handling**: Zero epochs
 
 ## ✅ Key Tests
 
@@ -132,12 +167,14 @@ test_manifold_config_tcs_consistency()
 
 ## 📈 Coverage Goals
 
-| Phase | Target | Status |
-|-------|--------|--------|
-| Phase 1 (Critical) | 40% | ✅ 100 tests implemented |
-| Phase 2 (High Priority) | 60% | 🔄 Planned |
-| Phase 3 (Integration) | 75% | 🔄 Planned |
-| Phase 4 (Comprehensive) | 85%+ | 🔄 Planned |
+| Phase | Target | Tests | Status |
+|-------|--------|-------|--------|
+| Phase 1 (Critical) | 40% | 100 | ✅ **COMPLETE** |
+| Phase 2 (High Priority) | 60% | 60 | ✅ **COMPLETE** |
+| Phase 3 (Integration) | 75% | ~30 | 🔄 Planned |
+| Phase 4 (Comprehensive) | 85%+ | ~20 | 🔄 Planned |
+
+**Current Total**: ~160 tests | **Coverage**: ~60%
 
 ## 🐛 Debugging Tests
 
@@ -169,25 +206,21 @@ Common fixtures available (from `conftest.py`):
 
 ## 🎯 Next Steps
 
-**Phase 2** (High Priority):
-- [ ] K7 manifold region weight tests (6 tests)
-- [ ] Cycle sampling validation (5 tests)
-- [ ] Trainer component tests (8 tests)
-- [ ] Curriculum learning integration (5 tests)
-
-**Phase 3** (Integration):
+**Phase 3** (Integration & Regression):
 - [ ] Full training pipeline (8 tests)
 - [ ] Checkpointing integrity (5 tests)
 - [ ] GIFT v1.0 reproduction validation (3 tests)
 
-**Phase 4** (Regression):
+**Phase 4** (Polish & Performance):
 - [ ] Numerical precision tests (6 tests)
-- [ ] Deterministic training tests (3 tests)
+- [ ] Performance benchmarks (3 tests)
+- [ ] Edge case handling (5 tests)
 
 ## 📚 References
 
-See [TEST_COVERAGE_ANALYSIS.md](../TEST_COVERAGE_ANALYSIS.md) for full analysis and roadmap.
+- [TEST_COVERAGE_ANALYSIS.md](../TEST_COVERAGE_ANALYSIS.md) - Full analysis and roadmap
+- [PHASE2_SUMMARY.md](./PHASE2_SUMMARY.md) - Phase 2 detailed summary
 
 ---
 
-**Status**: Phase 1 Complete ✅ (100 critical tests)
+**Status**: Phase 1-2 Complete ✅ (~160 tests, 60% coverage)
