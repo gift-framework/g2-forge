@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="g2-forge: Universal framework for neural construction of G₂ holonomy metrics on compact 7-manifolds">
+    <title>g2-forge - Universal G₂ Metric Construction</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <span class="logo">g2-forge</span>
+                <span class="version">v0.1.0-dev</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#quickstart">Quick Start</a></li>
+                <li><a href="#architecture">Architecture</a></li>
+                <li><a href="#docs">Docs</a></li>
+                <li><a href="https://github.com/gift-framework/g2-forge" target="_blank">GitHub</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="gradient-text">g2-forge</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Universal Framework for Neural Construction of G₂ Holonomy Metrics
+                </p>
+                <p class="hero-description">
+                    The first universal framework for constructing G₂ holonomy metrics on <strong>ANY</strong> compact 7-manifold using Physics-Informed Neural Networks (PINNs).
+                </p>
+                <div class="hero-buttons">
+                    <a href="#quickstart" class="btn btn-primary">Get Started</a>
+                    <a href="https://github.com/gift-framework/g2-forge" class="btn btn-secondary" target="_blank">View on GitHub</a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <div class="stat-value">~20k</div>
+                        <div class="stat-label">Lines of Code</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">34</div>
+                        <div class="stat-label">Test Files</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">10⁻⁷</div>
+                        <div class="stat-label">Torsion Precision</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">∀(b₂,b₃)</div>
+                        <div class="stat-label">Any Topology</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Innovation -->
+    <section class="innovation">
+        <div class="container">
+            <div class="innovation-card">
+                <h2>🎯 Key Innovation</h2>
+                <p class="innovation-text">
+                    Same code, <strong>any</strong> G₂ manifold topology.
+                </p>
+                <p>Unlike previous implementations hardcoded to specific manifolds (e.g., GIFT's b₂=21, b₃=77),
+                   g2-forge works for arbitrary topologies through automatic neural network sizing and
+                   parameterized loss functions.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <h3>Universal Topology Support</h3>
+                    <p>Work with any (b₂, b₃) topology, not just specific parameter sets. Neural networks automatically adapt to manifold topology.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔧</div>
+                    <h3>Auto-sizing Networks</h3>
+                    <p>HarmonicNetwork automatically sizes outputs from topology: H² forms = b₂, H³ forms = b₃. No manual configuration needed.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📐</div>
+                    <h3>Parameterized Losses</h3>
+                    <p>Loss functions scale with Betti numbers. Gram matrix dimensions adapt to topology configuration.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎓</div>
+                    <h3>Curriculum Learning</h3>
+                    <p>5-phase training strategy: neck stability → ACyl matching → cohomology refinement → harmonic extraction → calibration finetune.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">✅</div>
+                    <h3>Geometric Validation</h3>
+                    <p>Complete validation suite: Ricci-flatness, holonomy testing, metric properties, and cohomology rank verification.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧪</div>
+                    <h3>Production-Ready</h3>
+                    <p>8000+ lines of tests, checkpointing, resumption, metrics tracking, and comprehensive documentation.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Start Section -->
+    <section id="quickstart" class="quickstart">
+        <div class="container">
+            <h2 class="section-title">Quick Start</h2>
+            <div class="quickstart-content">
+                <div class="code-section">
+                    <h3>Installation</h3>
+                    <pre><code class="language-bash"># Clone repository
+git clone https://github.com/gift-framework/g2-forge.git
+cd g2-forge
+
+# Install dependencies
+pip install -r requirements-core.txt
+pip install -e .
+
+# Verify installation
+python -c "import g2forge as g2; print(g2.__version__)"</code></pre>
+                </div>
+
+                <div class="code-section">
+                    <h3>Basic Usage</h3>
+                    <pre><code class="language-python">import g2forge as g2
+
+# Create config for any topology - networks auto-size!
+config = g2.create_k7_config(
+    b2_m1=8, b3_m1=30,  # Building block 1
+    b2_m2=7, b3_m2=30   # Building block 2
+)
+# Results in topology: b₂=15, b₃=61
+
+# Create trainer (works on CPU or CUDA)
+trainer = g2.training.Trainer(config, device='cuda')
+
+# Train G₂ metric (15k epochs ≈ 2-6 hours on GPU)
+results = trainer.train(num_epochs=15000)
+
+# Validate geometry
+print(f"Final torsion: {results['final_metrics']['torsion']:.2e}")
+print(f"H² rank: {results['final_metrics']['rank_h2']}")
+print(f"H³ rank: {results['final_metrics']['rank_h3']}")
+
+# Save trained model
+trainer.save_checkpoint('g2_metric_b2_15_b3_61.pt')</code></pre>
+                </div>
+
+                <div class="code-section">
+                    <h3>GIFT Reproduction</h3>
+                    <pre><code class="language-python"># Reproduce original GIFT v1.0 results (b₂=21, b₃=77)
+config = g2.G2ForgeConfig.from_gift_v1_0()
+
+trainer = g2.training.Trainer(config, device='cuda')
+results = trainer.train(num_epochs=15000)
+
+# Achieves 10⁻⁷ to 10⁻¹¹ torsion precision!</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Architecture Section -->
+    <section id="architecture" class="architecture">
+        <div class="container">
+            <h2 class="section-title">Architecture Overview</h2>
+            <div class="architecture-grid">
+                <div class="arch-card">
+                    <h3>📦 Core Operators</h3>
+                    <p><code>g2forge/core/operators.py</code></p>
+                    <ul>
+                        <li>Hodge star operator: ★φ : Λ³ → Λ⁴</li>
+                        <li>Exterior derivative: dφ : Λ³ → Λ⁴</li>
+                        <li>Codifferential: δ = ★d★</li>
+                        <li>Metric reconstruction from φ</li>
+                    </ul>
+                </div>
+                <div class="arch-card">
+                    <h3>🧮 Loss Functions</h3>
+                    <p><code>g2forge/core/losses.py</code></p>
+                    <ul>
+                        <li>Torsion closure: dφ = 0</li>
+                        <li>Torsion coclosure: d★φ = 0</li>
+                        <li>Gram matrix (orthonormality)</li>
+                        <li>Calibration losses (associative/coassociative)</li>
+                    </ul>
+                </div>
+                <div class="arch-card">
+                    <h3>🧠 Neural Networks</h3>
+                    <p><code>g2forge/networks/</code></p>
+                    <ul>
+                        <li><strong>PhiNetwork</strong>: Outputs G₂ 3-form (35 components)</li>
+                        <li><strong>HarmonicNetwork</strong>: Extracts H² and H³ forms</li>
+                        <li>Auto-sizes from topology.b₂ and topology.b₃</li>
+                        <li>Fourier feature encoding</li>
+                    </ul>
+                </div>
+                <div class="arch-card">
+                    <h3>🏔️ Manifolds</h3>
+                    <p><code>g2forge/manifolds/</code></p>
+                    <ul>
+                        <li><strong>K7Manifold</strong>: TCS construction (M₁ #_T³ M₂)</li>
+                        <li>Coordinate sampling (grid/random)</li>
+                        <li>Background metric computation</li>
+                        <li>ACyl (asymptotically cylindrical) metrics</li>
+                    </ul>
+                </div>
+                <div class="arch-card">
+                    <h3>⚙️ Configuration</h3>
+                    <p><code>g2forge/utils/config.py</code></p>
+                    <ul>
+                        <li>Hierarchical dataclass-based configs</li>
+                        <li>TopologyConfig, ManifoldConfig, TrainingConfig</li>
+                        <li>Validation and serialization (JSON/YAML)</li>
+                        <li>Factory functions for common setups</li>
+                    </ul>
+                </div>
+                <div class="arch-card">
+                    <h3>🎯 Training</h3>
+                    <p><code>g2forge/training/trainer.py</code></p>
+                    <ul>
+                        <li>Curriculum learning (5 phases)</li>
+                        <li>Adaptive loss scheduling</li>
+                        <li>Checkpointing and resumption</li>
+                        <li>Metrics tracking and validation</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scientific Background -->
+    <section class="science">
+        <div class="container">
+            <h2 class="section-title">Scientific Background</h2>
+            <div class="science-content">
+                <div class="science-item">
+                    <h3>What are G₂ Manifolds?</h3>
+                    <p>7-dimensional Riemannian manifolds with exceptional holonomy group G₂. These spaces are characterized by:</p>
+                    <ul>
+                        <li><strong>Torsion-free condition:</strong> dφ = 0 and d★φ = 0</li>
+                        <li><strong>Ricci-flatness:</strong> Ric = 0 (consequence of G₂ holonomy)</li>
+                        <li><strong>Special 3-form φ:</strong> The G₂ structure defining the geometry</li>
+                    </ul>
+                </div>
+                <div class="science-item">
+                    <h3>Topology Characterization</h3>
+                    <p>G₂ manifolds are characterized by Betti numbers:</p>
+                    <ul>
+                        <li><strong>b₂:</strong> Rank of H²(M, ℝ) - 2-dimensional cohomology</li>
+                        <li><strong>b₃:</strong> Rank of H³(M, ℝ) - 3-dimensional cohomology</li>
+                        <li><strong>TCS construction:</strong> b₂ = b₂(M₁) + b₂(M₂), b₃ = b₃(M₁) + b₃(M₂) + 1</li>
+                    </ul>
+                </div>
+                <div class="science-item">
+                    <h3>Physics-Informed Neural Networks</h3>
+                    <p>We use PINNs to solve the nonlinear PDEs defining G₂ metrics:</p>
+                    <ul>
+                        <li>Neural network φ_θ(x) represents the G₂ 3-form</li>
+                        <li>Loss functions encode geometric constraints (dφ = 0, etc.)</li>
+                        <li>Automatic differentiation for computing derivatives</li>
+                        <li>Achieves 10⁻⁷ to 10⁻¹¹ precision on torsion constraints</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Documentation Section -->
+    <section id="docs" class="documentation">
+        <div class="container">
+            <h2 class="section-title">Documentation</h2>
+            <div class="docs-grid">
+                <a href="https://github.com/gift-framework/g2-forge/blob/main/README.md" class="doc-card" target="_blank">
+                    <h3>📖 README</h3>
+                    <p>Project overview, installation guide, and basic usage examples.</p>
+                </a>
+                <a href="https://github.com/gift-framework/g2-forge/blob/main/CLAUDE.md" class="doc-card" target="_blank">
+                    <h3>🤖 CLAUDE.md</h3>
+                    <p>Comprehensive AI assistant guide with architecture deep dive and development workflows.</p>
+                </a>
+                <a href="https://github.com/gift-framework/g2-forge/blob/main/ROADMAP.md" class="doc-card" target="_blank">
+                    <h3>🗺️ ROADMAP</h3>
+                    <p>Development phases, milestones, and future features.</p>
+                </a>
+                <a href="https://github.com/gift-framework/g2-forge/blob/main/REQUIREMENTS_GUIDE.md" class="doc-card" target="_blank">
+                    <h3>📋 Requirements Guide</h3>
+                    <p>Detailed requirements breakdown and implementation status.</p>
+                </a>
+                <a href="https://github.com/gift-framework/g2-forge/tree/main/examples" class="doc-card" target="_blank">
+                    <h3>💡 Examples</h3>
+                    <p>Complete code examples and usage patterns.</p>
+                </a>
+                <a href="https://github.com/gift-framework/g2-forge/tree/main/tests" class="doc-card" target="_blank">
+                    <h3>🧪 Tests</h3>
+                    <p>8000+ lines of comprehensive test suite with fixtures and utilities.</p>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tech Stack -->
+    <section class="tech-stack">
+        <div class="container">
+            <h2 class="section-title">Tech Stack</h2>
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <strong>Python 3.10+</strong>
+                    <span>Core Language</span>
+                </div>
+                <div class="tech-item">
+                    <strong>PyTorch 2.0+</strong>
+                    <span>ML Framework</span>
+                </div>
+                <div class="tech-item">
+                    <strong>NumPy</strong>
+                    <span>Numerical Computing</span>
+                </div>
+                <div class="tech-item">
+                    <strong>SciPy</strong>
+                    <span>Scientific Computing</span>
+                </div>
+                <div class="tech-item">
+                    <strong>pytest</strong>
+                    <span>Testing Framework</span>
+                </div>
+                <div class="tech-item">
+                    <strong>CUDA</strong>
+                    <span>GPU Acceleration</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- References -->
+    <section class="references">
+        <div class="container">
+            <h2 class="section-title">Key References</h2>
+            <div class="references-grid">
+                <div class="reference-card">
+                    <h4>G₂ Geometry</h4>
+                    <ul>
+                        <li>Joyce, D. (2000). <em>Compact Manifolds with Special Holonomy</em>. Oxford University Press.</li>
+                        <li>Bryant & Salamon (1989). "On the construction of some complete metrics with exceptional holonomy"</li>
+                    </ul>
+                </div>
+                <div class="reference-card">
+                    <h4>TCS Construction</h4>
+                    <ul>
+                        <li>Kovalev, A. (2003). "Twisted connected sums and special Riemannian holonomy"</li>
+                        <li>Corti et al. (2015). "G₂-manifolds and associative submanifolds via semi-Fano 3-folds"</li>
+                    </ul>
+                </div>
+                <div class="reference-card">
+                    <h4>Physics-Informed Neural Networks</h4>
+                    <ul>
+                        <li>Raissi et al. (2019). "Physics-informed neural networks"</li>
+                        <li>Lu et al. (2021). "DeepXDE: A deep learning library for solving differential equations"</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>g2-forge</h4>
+                    <p>Universal framework for G₂ metric construction</p>
+                    <p class="version-tag">Version 0.1.0-dev</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Links</h4>
+                    <ul>
+                        <li><a href="https://github.com/gift-framework/g2-forge" target="_blank">GitHub Repository</a></li>
+                        <li><a href="https://github.com/gift-framework/g2-forge/issues" target="_blank">Report Issues</a></li>
+                        <li><a href="https://github.com/gift-framework/GIFT" target="_blank">Original GIFT Framework</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <ul>
+                        <li>Email: <a href="mailto:brieuc@bdelaf.com">brieuc@bdelaf.com</a></li>
+                        <li>Project: <a href="https://github.com/gift-framework" target="_blank">GIFT Framework</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 GIFT Framework. Built with ❤️ for differential geometry and machine learning.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="assets/js/main.js"></script>
+</body>
+</html>
