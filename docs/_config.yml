@@ -1,0 +1,134 @@
+# ============================================
+# g2-forge - Jekyll Configuration
+# ============================================
+
+# Site settings
+title: g2-forge
+description: >-
+  Universal framework for neural construction of G₂ holonomy metrics
+  on compact 7-manifolds using Physics-Informed Neural Networks (PINNs).
+baseurl: "/g2-forge"
+url: "https://gift-framework.github.io"
+
+# Author information
+author:
+  name: GIFT Framework
+  email: brieuc@bdelaf.com
+  github: gift-framework
+
+# Repository information
+repository: gift-framework/g2-forge
+github_username: gift-framework
+
+# Build settings
+markdown: kramdown
+theme: null  # Using custom HTML/CSS
+
+# Exclude from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+  - README.md
+
+# Include assets
+include:
+  - assets
+
+# kramdown settings
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    default_lang: python
+
+# Collections (for future expansion)
+collections:
+  docs:
+    output: true
+    permalink: /docs/:path/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "docs"
+    values:
+      layout: "default"
+
+# Social links
+social:
+  github: https://github.com/gift-framework/g2-forge
+  email: brieuc@bdelaf.com
+
+# SEO and metadata
+lang: en
+timezone: UTC
+
+# Google Analytics (add your tracking ID if needed)
+# google_analytics: UA-XXXXXXXXX-X
+
+# Plugin settings
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+# SEO Tag settings
+twitter:
+  card: summary_large_image
+
+# OpenGraph settings
+logo: /assets/images/logo.png
+
+# Project metadata
+project:
+  version: 0.1.0-dev
+  license: MIT
+  status: Development
+  python_version: "3.10+"
+  pytorch_version: "2.0+"
+
+# Navigation (for future multi-page expansion)
+navigation:
+  - title: Features
+    url: "#features"
+  - title: Quick Start
+    url: "#quickstart"
+  - title: Architecture
+    url: "#architecture"
+  - title: Docs
+    url: "#docs"
+  - title: GitHub
+    url: https://github.com/gift-framework/g2-forge
+    external: true
+
+# Features showcase
+features:
+  - title: Universal Topology Support
+    icon: 🌐
+    description: Work with any (b₂, b₃) topology
+  - title: Auto-sizing Networks
+    icon: 🔧
+    description: Networks adapt automatically to manifold topology
+  - title: Parameterized Losses
+    icon: 📐
+    description: Loss functions scale with Betti numbers
+  - title: Curriculum Learning
+    icon: 🎓
+    description: 5-phase training strategy
+  - title: Geometric Validation
+    icon: ✅
+    description: Complete validation suite
+  - title: Production-Ready
+    icon: 🧪
+    description: 8000+ lines of tests
+
+# Technical specifications
+specs:
+  code_lines: "~20,000"
+  test_files: 34
+  test_lines: "8,000+"
+  precision: "10⁻⁷ - 10⁻¹¹"
+  topologies: "Any (b₂, b₃)"
