@@ -1,12 +1,23 @@
-# Test dependencies for g2-forge
+# Testing dependencies for g2-forge
+# Comprehensive test suite with coverage and benchmarking
 # Install with: pip install -r requirements-test.txt
 
-# Testing framework
-pytest>=7.4.0
-pytest-cov>=4.1.0
-pytest-xdist>=3.3.0  # For parallel test execution
+-r requirements-core.txt
 
-# Core dependencies (if not already installed)
-torch>=2.0.0
-numpy>=1.24.0
-scipy>=1.10.0
+# Testing Framework
+pytest>=7.4.0,<9.0.0         # Main testing framework
+pytest-cov>=4.1.0,<7.0.0     # Coverage reporting
+pytest-xdist>=3.3.0,<4.0.0   # Parallel test execution
+pytest-timeout>=2.1.0,<3.0.0 # Timeout control for long tests
+pytest-mock>=3.11.0,<4.0.0   # Mocking utilities
+
+# Coverage & Reporting
+coverage[toml]>=7.2.0,<8.0.0 # Coverage with TOML support
+pytest-html>=3.2.0,<5.0.0    # HTML test reports
+
+# Performance Testing
+pytest-benchmark>=4.0.0,<5.0.0  # Benchmarking tests
+memory-profiler>=0.61.0,<1.0.0  # Memory profiling
+
+# Property-Based Testing (optional but powerful)
+hypothesis>=6.75.0,<7.0.0    # Property-based testing for edge cases

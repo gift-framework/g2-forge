@@ -1,10 +1,40 @@
-# Core dependencies
-torch>=2.0.0
-numpy>=1.24.0
-scipy>=1.10.0
-tqdm>=4.65.0
+# Main requirements file for g2-forge
+# G₂ holonomy metric construction framework using Physics-Informed Neural Networks
 
-# Optional (for development)
-pytest>=7.0.0
-jupyter>=1.0.0
-matplotlib>=3.7.0
+# Core dependencies (required for basic usage)
+-r requirements-core.txt
+
+# ========================================
+# Installation Instructions
+# ========================================
+#
+# Basic installation:
+#   pip install -r requirements.txt
+#
+# For development (includes visualization, profiling, docs):
+#   pip install -r requirements-dev.txt
+#
+# For testing (includes pytest, coverage, benchmarks):
+#   pip install -r requirements-test.txt
+#
+# For CUDA support (GPU acceleration):
+#   See requirements-cuda.txt or install from pytorch.org:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu118
+#
+# ========================================
+# Recommended Setup for Contributors
+# ========================================
+#
+# 1. Create virtual environment:
+#    python -m venv venv
+#    source venv/bin/activate  # On Windows: venv\Scripts\activate
+#
+# 2. Install development dependencies:
+#    pip install -r requirements-dev.txt
+#    pip install -r requirements-test.txt
+#
+# 3. Install pre-commit hooks (optional):
+#    pip install pre-commit
+#    pre-commit install
+#
+# ========================================
