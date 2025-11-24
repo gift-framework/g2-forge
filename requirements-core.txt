@@ -1,0 +1,13 @@
+# Core dependencies for g2-forge
+# G₂ holonomy metric construction using PINNs
+
+# Deep Learning
+torch>=2.0.0,<3.0.0          # PyTorch for neural networks
+                             # For CUDA support, install from pytorch.org
+
+# Numerical Computing
+numpy>=1.24.0,<2.0.0         # Array operations and linear algebra
+scipy>=1.10.0,<2.0.0         # Scientific computing (eigenvalues, integration)
+
+# Progress & Utilities
+tqdm>=4.65.0,<5.0.0          # Progress bars for training loops

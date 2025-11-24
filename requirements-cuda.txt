@@ -1,0 +1,34 @@
+# CUDA-enabled PyTorch for GPU acceleration
+# For g2-forge training on NVIDIA GPUs
+
+# Choose the appropriate CUDA version for your system:
+
+# ========================================
+# CUDA 11.8 (recommended, widest compatibility)
+# ========================================
+--extra-index-url https://download.pytorch.org/whl/cu118
+torch>=2.0.0,<3.0.0
+torchvision>=0.15.0,<1.0.0   # Optional: for image processing
+torchaudio>=2.0.0,<3.0.0     # Optional: for audio
+
+# ========================================
+# CUDA 12.1 (latest, requires newer drivers)
+# ========================================
+# --extra-index-url https://download.pytorch.org/whl/cu121
+# torch>=2.0.0,<3.0.0
+# torchvision>=0.15.0,<1.0.0
+# torchaudio>=2.0.0,<3.0.0
+
+# ========================================
+# Verification
+# ========================================
+# After installation, verify CUDA is available:
+#   python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}')"
+#   python -c "import torch; print(f'CUDA version: {torch.version.cuda}')"
+#   python -c "import torch; print(f'Device count: {torch.cuda.device_count()}')"
+
+# Other dependencies (if not already installed)
+-r requirements-core.txt
+
+# CUDA-specific utilities (optional)
+nvidia-ml-py>=11.525.0,<13.0.0  # NVIDIA Management Library Python bindings

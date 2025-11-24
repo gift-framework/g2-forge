@@ -1,0 +1,65 @@
+# Optional dependencies for g2-forge
+# Advanced features, integrations, and specialized tools
+
+-r requirements-core.txt
+
+# ========================================
+# Advanced Visualization & 3D Graphics
+# ========================================
+mayavi>=4.8.0,<5.0.0         # 3D visualization for manifolds
+pyvista>=0.40.0,<1.0.0       # 3D plotting and mesh visualization
+vtk>=9.2.0,<10.0.0           # Visualization Toolkit (for complex geometry)
+
+# ========================================
+# Symbolic Mathematics
+# ========================================
+sympy>=1.12,<2.0.0           # Symbolic computation for differential geometry
+# For verifying geometric identities and tensor computations
+
+# ========================================
+# Optimization & Advanced Training
+# ========================================
+optuna>=3.2.0,<4.0.0         # Hyperparameter optimization
+wandb>=0.15.0,<1.0.0         # Weights & Biases integration for experiment tracking
+mlflow>=2.4.0,<3.0.0         # MLflow for experiment tracking (alternative to wandb)
+
+# ========================================
+# High-Performance Computing
+# ========================================
+dask[complete]>=2023.5.0,<2025.0.0  # Parallel computing for large-scale analysis
+ray[default]>=2.5.0,<3.0.0          # Distributed computing framework
+mpi4py>=3.1.0,<4.0.0                # MPI bindings for cluster computing
+
+# ========================================
+# Advanced Data Handling
+# ========================================
+zarr>=2.14.0,<3.0.0          # Chunked, compressed N-dimensional arrays
+xarray>=2023.5.0,<2025.0.0   # N-dimensional labeled arrays
+netCDF4>=1.6.0,<2.0.0        # NetCDF file format support
+
+# ========================================
+# Machine Learning Extras
+# ========================================
+scikit-learn>=1.3.0,<2.0.0   # Classical ML tools for analysis
+tensorly>=0.8.0,<1.0.0       # Tensor decomposition methods
+einops>=0.6.0,<1.0.0         # Elegant tensor operations
+
+# ========================================
+# Differential Geometry Libraries
+# ========================================
+# Note: Most are research-grade, install with caution
+# geomstats>=2.6.0,<3.0.0    # Geometry on manifolds (Riemannian geometry)
+
+# ========================================
+# Development & Debugging
+# ========================================
+line-profiler>=4.0.0,<5.0.0  # Line-by-line profiling
+pdbpp>=0.10.0,<1.0.0         # Enhanced Python debugger
+ipdb>=0.13.0,<1.0.0          # IPython debugger
+
+# ========================================
+# Documentation & Presentation
+# ========================================
+nbconvert>=7.4.0,<8.0.0      # Convert notebooks to various formats
+jupytext>=1.14.0,<2.0.0      # Sync notebooks with Python scripts
+rise>=5.7.0,<6.0.0           # Jupyter slideshow extension
