@@ -1,707 +1,555 @@
 # Test Coverage Analysis for g2-forge
 
-**Date**: 2025-11-22
-**Analyzed Codebase**: ~3,716 lines of production code
-**Current Test Coverage**: ~350 lines (3 test files)
-**Estimated Coverage**: ~15-20% of functionality
-
----
-
 ## Executive Summary
 
-The g2-forge codebase has **minimal test coverage** with only 3 basic test files:
-1. `crash_test.py` - Smoke tests (7 basic checks)
-2. `test_networks.py` - Network auto-sizing validation (4 tests)
-3. `test_phase2.py` - Phase 2 validation (5 integration tests)
+**Overall Coverage**: EXCELLENT ✅
+- **Test to Source Ratio**: 1.6:1 (9,094 lines of tests vs 5,302 lines of source code)
+- **Total Test Functions**: 573 tests across 34 test files
+- **Source Files**: 12 main modules + utilities
 
-**Critical Gap**: Only ~15-20% of the codebase has any test coverage. Key missing areas include:
-- Differential geometry operators (no unit tests)
-- Loss functions (no validation of correctness)
-- Configuration validation (minimal edge case testing)
-- Training infrastructure (no isolated component tests)
-- Manifold coordinate sampling (no distribution validation)
+The codebase has impressive test coverage overall, but there are specific areas that would benefit from additional testing to ensure robustness and maintainability.
 
 ---
 
-## Current Test Coverage
+## Current Test Coverage by Module
 
-### ✅ What IS Tested
+### ✅ Well-Covered Areas
 
-| Component | Test File | Coverage Level |
-|-----------|-----------|----------------|
-| Network auto-sizing | `test_networks.py` | **Good** (3 topologies tested) |
-| Basic imports | `crash_test.py`, `test_phase2.py` | **Good** |
-| GIFT config creation | `crash_test.py` | **Basic** |
-| Custom config creation | `crash_test.py` | **Basic** |
-| Manifold creation | `test_phase2.py` | **Basic** |
-| Coordinate sampling | `test_phase2.py` | **Minimal** (only shape check) |
-| Levi-Civita construction | `test_phase2.py` | **Minimal** (only size check) |
-| Mini training (5 epochs) | `crash_test.py` | **Smoke test only** |
+1. **Core Operators** (`g2forge/core/operators.py`)
+   - Comprehensive tests for Hodge star, exterior derivative, metric reconstruction
+   - Good coverage of edge cases and antisymmetry properties
 
-### ❌ What is NOT Tested
+2. **Loss Functions** (`g2forge/core/losses.py`)
+   - All major loss components tested
+   - Parameterization by topology verified
 
-| Category | Component | Risk Level |
-|----------|-----------|------------|
-| **Core Operators** | `hodge_star_3()` correctness | **CRITICAL** |
-| **Core Operators** | `compute_exterior_derivative()` accuracy | **CRITICAL** |
-| **Core Operators** | `compute_coclosure()` accuracy | **CRITICAL** |
-| **Core Operators** | `reconstruct_metric_from_phi()` validity | **HIGH** |
-| **Core Operators** | `validate_antisymmetry()` edge cases | **MEDIUM** |
-| **Loss Functions** | `torsion_closure_loss()` correctness | **CRITICAL** |
-| **Loss Functions** | `gram_matrix_loss()` universality | **CRITICAL** |
-| **Loss Functions** | `AdaptiveLossScheduler` behavior | **HIGH** |
-| **Loss Functions** | Calibration losses | **MEDIUM** |
-| **Networks** | `PhiNetwork` antisymmetry guarantee | **HIGH** |
-| **Networks** | `HarmonicNetwork` orthogonality | **HIGH** |
-| **Networks** | Fourier features stability | **MEDIUM** |
-| **Manifolds** | K7 region weight consistency | **HIGH** |
-| **Manifolds** | Cycle sampling validity | **MEDIUM** |
-| **Manifolds** | TCS topology validation | **HIGH** |
-| **Config** | Validation edge cases | **MEDIUM** |
-| **Config** | Serialization round-trip | **MEDIUM** |
-| **Training** | Curriculum phase transitions | **HIGH** |
-| **Training** | Gradient flow | **CRITICAL** |
-| **Training** | Checkpointing integrity | **HIGH** |
+3. **Configuration System** (`g2forge/utils/config.py`)
+   - TopologyConfig, TCSParameters well-tested
+   - Validation logic covered
+
+4. **Networks** (`g2forge/networks/`)
+   - PhiNetwork and HarmonicNetwork tested
+   - Auto-sizing from topology verified
+
+5. **Trainer** (`g2forge/training/trainer.py`)
+   - Core training loop tested
+   - Checkpointing covered
+
+6. **Spectral Analysis** (`g2forge/analysis/spectral.py`)
+   - Nearly complete: 13 functions, 12 tests (92% coverage)
 
 ---
 
-## Detailed Coverage Analysis by Module
+## ⚠️ Areas Needing Improvement
 
-### 1. Core Operators (`g2forge/core/operators.py` - 480 lines)
+### 1. **Base Classes and Abstract Interfaces** 🔴 CRITICAL
 
-**Current Coverage**: ~5% (only Levi-Civita size check)
+**Current Status**: 
+- ❌ Manifold base class: 0 tests
+- ❌ TCSManifold base class: 0 tests  
+- ❌ Cycle dataclass: 0 tests
 
-#### Missing Tests:
+**Issue**: Abstract base classes define the contract for extensibility but are untested.
 
-##### 1.1 Levi-Civita Tensor (`build_levi_civita_sparse_7d`)
-- ✅ **Tested**: Output shape (5040 permutations)
-- ❌ **Missing**:
-  - Sign correctness for even/odd permutations
-  - Completeness (all permutations present)
-  - Antisymmetry property validation
-  - Known permutation spot checks (e.g., [0,1,2,3,4,5,6] → +1)
+**Recommended Tests**:
+```python
+# tests/unit/test_manifold_base.py (NEW FILE)
 
-##### 1.2 Hodge Star (`hodge_star_3`)
-- ❌ **Missing** (NO TESTS):
-  - Mathematical correctness (★★ω = ±ω test)
-  - Volume form preservation
-  - Metric dependence (different metrics → different results)
-  - Numerical stability with ill-conditioned metrics
-  - Batch processing consistency
-  - Known analytical test cases
+def test_manifold_abstract_methods_enforced():
+    """Test that Manifold cannot be instantiated directly."""
+    with pytest.raises(TypeError):
+        Manifold(config)
 
-##### 1.3 Exterior Derivative (`compute_exterior_derivative`)
-- ❌ **Missing** (NO TESTS):
-  - d(dω) = 0 (exact sequence property)
-  - Gradient computation accuracy
-  - Antisymmetry preservation
-  - Subsampling consistency
-  - Known analytical derivatives
+def test_manifold_subclass_must_implement_required_methods():
+    """Test that subclasses must implement abstract methods."""
+    class BadManifold(Manifold):
+        pass  # Missing required methods
+    
+    with pytest.raises(TypeError):
+        BadManifold(config)
 
-##### 1.4 Coclosure (`compute_coclosure`)
-- ❌ **Missing** (NO TESTS):
-  - Mathematical correctness (δδω = 0)
-  - Relationship to exterior derivative (δ = ★d★)
-  - Subsampling effects
-  - Gradient flow validation
+def test_tcs_manifold_region_indicator():
+    """Test TCSManifold.compute_region_indicator() for all regions."""
+    # Test m1, neck, m2 regions
+    # Test boundary transitions
+    # Test sharpness parameter
 
-##### 1.5 Metric Reconstruction (`reconstruct_metric_from_phi`)
-- ❌ **Missing** (NO TESTS):
-  - Positive definiteness guarantee
-  - Symmetry validation
-  - Known G₂ 3-form → metric examples
-  - Regularization effects
+def test_tcs_manifold_properties():
+    """Test b2_m1, b3_m1, b2_m2, b3_m2, neck_width properties."""
+    pass
 
-##### 1.6 Region Weighted Torsion
-- ❌ **Missing** (NO TESTS):
-  - Region weight normalization
-  - M₁/Neck/M₂ decomposition correctness
-  - Edge cases (single region, no regions)
+def test_cycle_dataclass_creation():
+    """Test Cycle creation and validation."""
+    cycle = Cycle(type="associative", dimension=3, indices=(0,1,2))
+    assert cycle.dimension == 3
+    assert cycle.volume == 1.0
+```
 
-**Proposed Tests**: 15-20 unit tests
+**Priority**: HIGH (affects extensibility for new manifold types)
 
 ---
 
-### 2. Loss Functions (`g2forge/core/losses.py` - 563 lines)
+### 2. **Serialization and Deserialization** 🟡 MEDIUM
 
-**Current Coverage**: ~0% (NO DIRECT TESTS)
+**Current Status**:
+- Only 6 references to serialization methods in tests
+- Methods exist: `to_json()`, `from_json()`, `to_yaml()`, `from_yaml()`, `to_dict()`, `from_dict()`
 
-#### Missing Tests:
+**Issue**: These are critical for saving/loading configs but sparsely tested.
 
-##### 2.1 Torsion Losses
-- ❌ **Missing**:
-  - Zero loss for closed forms
-  - Non-zero loss for non-closed forms
-  - Gradient behavior near zero
-  - Batch consistency
+**Recommended Tests**:
+```python
+# tests/unit/test_config_serialization.py (NEW FILE)
 
-##### 2.2 Gram Matrix Loss
-- ❌ **Missing** (CRITICAL FOR UNIVERSALITY):
-  - Orthonormality enforcement for various b₂, b₃
-  - Determinant constraint
-  - Rank computation accuracy
-  - Eigenvalue tolerance edge cases
-  - Small vs large topology (b₂=3 vs b₂=100)
-  - Identity target convergence
+def test_topology_config_json_roundtrip():
+    """Test TopologyConfig serialization to/from JSON."""
+    topology = TopologyConfig(b2=21, b3=77)
+    json_str = topology.to_json()
+    restored = TopologyConfig.from_json(json_str)
+    assert restored.b2 == topology.b2
+    assert restored.b3 == topology.b3
 
-##### 2.3 Adaptive Loss Scheduler
-- ❌ **Missing**:
-  - Plateau detection accuracy
-  - Weight boost behavior
-  - Safety cap enforcement (prevent runaway)
-  - History tracking
-  - Reset functionality
+def test_g2forge_config_yaml_roundtrip():
+    """Test full G2ForgeConfig serialization to/from YAML."""
+    config = G2ForgeConfig.from_gift_v1_0()
+    yaml_str = config.to_yaml()
+    restored = G2ForgeConfig.from_yaml(yaml_str)
+    assert restored.manifold.topology.b2 == config.manifold.topology.b2
 
-##### 2.4 Composite Loss
-- ❌ **Missing**:
-  - Component weight application
-  - Curriculum phase integration
-  - Adaptive weight interaction
-  - Missing region weights handling
-  - Missing cycles handling
+def test_config_serialization_preserves_nested_structures():
+    """Test that nested configs (ManifoldConfig, TCSParameters) serialize correctly."""
+    pass
 
-**Proposed Tests**: 20-25 unit tests
+def test_config_from_dict_with_missing_fields():
+    """Test graceful handling of missing fields during deserialization."""
+    incomplete_dict = {"b2": 21}  # Missing b3
+    with pytest.raises(KeyError):
+        TopologyConfig.from_dict(incomplete_dict)
 
----
+def test_config_to_dict_includes_all_fields():
+    """Test that to_dict() includes all dataclass fields."""
+    pass
+```
 
-### 3. Networks (`g2forge/networks/` - 703 lines)
-
-**Current Coverage**: ~30% (auto-sizing tested, but not correctness)
-
-#### Missing Tests:
-
-##### 3.1 PhiNetwork
-- ✅ **Tested**: Output shape (batch, 35)
-- ✅ **Tested**: Tensor expansion (batch, 7, 7, 7)
-- ❌ **Missing**:
-  - Antisymmetry of output tensor (critical property!)
-  - Fourier feature randomness stability
-  - Weight initialization distribution
-  - Parameter counting accuracy
-  - Different activation functions
-  - Forward pass gradient flow
-  - Known input → expected output structure
-
-##### 3.2 HarmonicNetwork
-- ✅ **Tested**: Auto-sizing for different topologies
-- ✅ **Tested**: Output shape (batch, n_forms, n_components)
-- ❌ **Missing**:
-  - Form antisymmetry (2-forms and 3-forms)
-  - Gram-Schmidt orthogonalization correctness
-  - Linear independence of forms
-  - Gradient flow through multiple heads
-  - Edge cases (n_forms=1, n_forms=100)
-  - Parameter efficiency vs n_forms
-
-##### 3.3 FourierFeatures
-- ❌ **Missing** (NO ISOLATED TESTS):
-  - Frequency matrix stability (non-trainable)
-  - Output distribution properties
-  - Coordinate mapping coverage
-  - Batch invariance
-
-**Proposed Tests**: 15-20 unit tests
+**Priority**: MEDIUM (important for persistence, but existing usage suggests it works)
 
 ---
 
-### 4. Manifolds (`g2forge/manifolds/` - 778 lines)
+### 3. **Property Methods** 🟡 MEDIUM
 
-**Current Coverage**: ~10% (basic creation and sampling)
+**Current Status**:
+- 18 `@property` methods in source code
+- Only 8 tests referencing property testing
 
-#### Missing Tests:
+**Issue**: Properties like `euler_characteristic`, `b4`, `b5`, etc. are computed dynamically and need verification.
 
-##### 4.1 K7Manifold
-- ✅ **Tested**: Creation with different topologies
-- ✅ **Tested**: Basic coordinate sampling (shape only)
-- ❌ **Missing**:
-  - Coordinate distribution validation (uniform in t, periodic in θ)
-  - Grid sampling completeness (n^7 points)
-  - Random sampling uniformity
-  - Hybrid sampling properties
-  - Coordinate bounds validation (t ∈ [0,1], θ ∈ [0,2π])
-  - Region weights sum to ~1
-  - Region weights smoothness (sigmoid properties)
-  - Neck region centering
-  - M₁/M₂ asymptotic behavior
+**Recommended Tests**:
+```python
+# tests/unit/test_topology_properties.py (NEW FILE)
 
-##### 4.2 Cycles
-- ❌ **Missing** (NO TESTS):
-  - Associative cycle validity
-  - Coassociative cycle validity
-  - Cycle sampling (sample_on_cycle)
-  - Cycle volume computation
-  - Parametrization correctness
+def test_poincare_duality_properties():
+    """Test all Poincaré duality relations: b₄=b₃, b₅=b₂, b₆=b₁, b₇=b₀."""
+    topology = TopologyConfig(b2=21, b3=77)
+    assert topology.b4 == topology.b3
+    assert topology.b5 == topology.b2
+    assert topology.b6 == topology.b1
+    assert topology.b7 == topology.b0
 
-##### 4.3 TCSManifold Base
-- ❌ **Missing**:
-  - Region indicator smoothness
-  - Transition sharpness parameter effects
-  - Topology consistency validation
+def test_euler_characteristic_formula():
+    """Test χ = 2(b₀ - b₁ + b₂ - b₃) for various topologies."""
+    test_cases = [
+        (TopologyConfig(b2=21, b3=77), -110),
+        (TopologyConfig(b2=5, b3=20), -28),
+        (TopologyConfig(b2=50, b3=150), -198),
+    ]
+    for topology, expected_chi in test_cases:
+        assert topology.euler_characteristic == expected_chi
 
-**Proposed Tests**: 15-18 unit tests
+def test_manifold_dimension_property():
+    """Test that dimension property always returns 7."""
+    pass
 
----
+def test_tcs_total_topology_properties():
+    """Test that total_b2 and total_b3 correctly sum M₁ and M₂."""
+    tcs = TCSParameters(b2_m1=11, b3_m1=40, b2_m2=10, b3_m2=37)
+    assert tcs.total_b2 == 21
+    assert tcs.total_b3 == 77
+```
 
-### 5. Configuration (`g2forge/utils/config.py` - 613 lines)
-
-**Current Coverage**: ~15% (basic creation tested)
-
-#### Missing Tests:
-
-##### 5.1 TopologyConfig
-- ✅ **Tested**: Basic creation (b₂, b₃)
-- ❌ **Missing**:
-  - Poincaré duality properties (b₄=b₃, b₅=b₂)
-  - Euler characteristic computation
-  - Validation edge cases (negative Betti numbers)
-  - b₁ ≠ 0 rejection
-
-##### 5.2 TCSParameters
-- ❌ **Missing**:
-  - total_b2/total_b3 computation
-  - Neck width validation (must be in (0,1))
-  - Topology consistency checks
-  - Edge cases (zero Betti numbers)
-
-##### 5.3 ManifoldConfig
-- ✅ **Tested**: GIFT and custom creation
-- ❌ **Missing**:
-  - TCS topology mismatch detection
-  - Missing tcs_params for TCS construction
-  - Dimension validation (must be 7)
-  - Invalid construction types
-
-##### 5.4 G2ForgeConfig
-- ❌ **Missing**:
-  - GIFT v1.0 reproduction validation (5 phases)
-  - JSON serialization round-trip
-  - YAML serialization round-trip
-  - Config validation cascading
-  - Curriculum phase ordering
-  - Phase epoch range overlap detection
-
-##### 5.5 NetworkArchitectureConfig
-- ❌ **Missing**:
-  - Output dimension calculation for various topologies
-  - Architecture parameter validation
-
-**Proposed Tests**: 20-25 unit tests
+**Priority**: MEDIUM (properties are critical but currently working)
 
 ---
 
-### 6. Training (`g2forge/training/trainer.py` - 388 lines)
+### 4. **Parametrized Tests for Universality** 🟡 MEDIUM
 
-**Current Coverage**: ~5% (mini 5-epoch smoke test only)
+**Current Status**:
+- Only 7 `@pytest.mark.parametrize` uses across all tests
+- Universality is a core design goal but not extensively tested
 
-#### Missing Tests:
+**Issue**: The framework should work for ANY (b₂, b₃). Need more cross-topology testing.
 
-##### 6.1 Trainer Initialization
-- ✅ **Tested**: Basic creation
-- ❌ **Missing**:
-  - Network creation from config
-  - Optimizer initialization
-  - Scheduler setup (warmup + cosine)
-  - Loss function creation with correct topology
-  - Device placement
+**Recommended Tests**:
+```python
+# Enhance existing tests with parametrization
 
-##### 6.2 Training Loop
-- ✅ **Tested**: 5-epoch smoke test (passes without error)
-- ❌ **Missing** (CRITICAL):
-  - Single train_step isolated test
-  - Gradient computation validation
-  - Gradient clipping behavior
-  - Loss decrease over epochs
-  - Metrics tracking accuracy
-  - Curriculum phase transitions (5 phases)
-  - Learning rate schedule (warmup → cosine)
-  - Batch size effects
+@pytest.mark.parametrize("b2,b3", [
+    (1, 5),      # Minimal
+    (5, 20),     # Small
+    (21, 77),    # GIFT
+    (50, 150),   # Large
+    (100, 300),  # Very large
+])
+def test_harmonic_network_scales_with_topology(b2, b3):
+    """Test HarmonicNetwork correctly sizes for any topology."""
+    topology = TopologyConfig(b2=b2, b3=b3)
+    h2_net = HarmonicNetwork(topology, p=2, hidden_dims=[128, 256])
+    assert h2_net.n_forms == b2
 
-##### 6.3 Checkpointing
-- ❌ **Missing** (NO TESTS):
-  - Checkpoint save/load integrity
-  - State restoration (networks, optimizer, scheduler)
-  - Resume training from checkpoint
-  - Metrics history preservation
-  - Best checkpoint tracking
+@pytest.mark.parametrize("b2_m1,b3_m1,b2_m2,b3_m2", [
+    (5, 20, 5, 20),     # Symmetric
+    (20, 60, 1, 10),    # Asymmetric
+    (0, 10, 5, 20),     # Zero b₂ on M₁
+])
+def test_k7_manifold_with_various_tcs_parameters(b2_m1, b3_m1, b2_m2, b3_m2):
+    """Test K7Manifold works with various TCS component topologies."""
+    config = create_k7_config(b2_m1, b3_m1, b2_m2, b3_m2)
+    manifold = create_manifold(config.manifold)
+    assert manifold.b2 == b2_m1 + b2_m2
+    
+    # Test coordinate sampling
+    coords = manifold.sample_coordinates(100)
+    assert coords.shape == (100, 7)
+```
 
-**Proposed Tests**: 12-15 integration tests
-
----
-
-### 7. Integration & End-to-End
-
-**Current Coverage**: ~10% (mini training only)
-
-#### Missing Tests:
-
-##### 7.1 Full Pipeline
-- ✅ **Tested**: 5-epoch mini training (smoke test)
-- ❌ **Missing**:
-  - 100-epoch convergence test
-  - Torsion reduction over time
-  - Harmonic rank convergence
-  - Multiple topology training (b₂∈{5,21,50}, b₃∈{20,77,150})
-  - GPU vs CPU consistency
-
-##### 7.2 Universality Validation
-- ❌ **Missing** (KEY FEATURE NOT TESTED):
-  - Same code, different topologies (3+ configs)
-  - Network parameter count scaling with topology
-  - Loss function adaptation to topology
-  - Convergence for small (b₂=3) vs large (b₂=100)
-
-##### 7.3 Reproduction Tests
-- ❌ **Missing**:
-  - GIFT v1.0 config → expected metrics
-  - Deterministic training (fixed seed)
-  - Numerical precision regression tests
-
-**Proposed Tests**: 8-10 integration tests
+**Priority**: MEDIUM (framework mostly works, but more coverage increases confidence)
 
 ---
 
-## Proposed Test Structure
+### 5. **FourierFeatures Network Component** 🟡 MEDIUM
+
+**Current Status**:
+- Only 6 mentions in all tests
+- FourierFeatures is a critical component of PhiNetwork
+
+**Issue**: This encoding layer affects network expressiveness but is undertested.
+
+**Recommended Tests**:
+```python
+# tests/unit/test_fourier_features.py (NEW FILE)
+
+def test_fourier_features_output_dimension():
+    """Test FourierFeatures produces correct output dimension."""
+    ff = FourierFeatures(input_dim=7, mapping_size=256)
+    x = torch.randn(10, 7)
+    encoded = ff(x)
+    assert encoded.shape == (10, 512)  # 2 * mapping_size (sin + cos)
+
+def test_fourier_features_frequency_diversity():
+    """Test that random frequencies provide diverse encodings."""
+    ff = FourierFeatures(input_dim=7, mapping_size=256)
+    # Check that B matrix has expected properties
+    assert ff.B.shape == (7, 256)
+
+def test_fourier_features_deterministic_with_seed():
+    """Test that setting random seed makes FourierFeatures deterministic."""
+    torch.manual_seed(42)
+    ff1 = FourierFeatures(input_dim=7, mapping_size=256)
+    
+    torch.manual_seed(42)
+    ff2 = FourierFeatures(input_dim=7, mapping_size=256)
+    
+    assert torch.allclose(ff1.B, ff2.B)
+
+def test_fourier_features_scale_parameter():
+    """Test effect of scale parameter on frequency distribution."""
+    ff_small = FourierFeatures(input_dim=7, mapping_size=256, scale=1.0)
+    ff_large = FourierFeatures(input_dim=7, mapping_size=256, scale=10.0)
+    
+    # Larger scale should give higher frequency components
+    assert ff_large.B.abs().mean() > ff_small.B.abs().mean()
+```
+
+**Priority**: MEDIUM (component works but worth explicit testing)
+
+---
+
+### 6. **Mocking and Unit Test Isolation** 🟢 LOW
+
+**Current Status**:
+- 0 uses of `mock`, `patch`, or `Mock` in tests
+- Tests rely on real object instantiation
+
+**Issue**: Some tests could be faster and more isolated with mocking.
+
+**Recommended Additions**:
+```python
+# Example: Mock expensive operations in unit tests
+
+from unittest.mock import Mock, patch
+
+def test_trainer_calls_checkpoint_save_at_intervals():
+    """Test that Trainer saves checkpoints at specified intervals."""
+    config = create_k7_config(...)
+    trainer = Trainer(config, device='cpu')
+    
+    with patch.object(trainer, 'save_checkpoint') as mock_save:
+        trainer.train(num_epochs=1000)
+        # Verify save_checkpoint was called
+        assert mock_save.call_count == 10  # If checkpoint_interval=100
+
+def test_loss_function_called_with_correct_arguments():
+    """Test that Trainer passes correct args to loss function."""
+    with patch('g2forge.core.losses.CompositeLoss.forward') as mock_loss:
+        mock_loss.return_value = {'total': torch.tensor(1.0), 'losses': {}}
+        trainer.train_step(epoch=0)
+        mock_loss.assert_called_once()
+```
+
+**Priority**: LOW (nice to have, but current approach is acceptable)
+
+---
+
+### 7. **Validation Method Coverage** 🟡 MEDIUM
+
+**Current Status**:
+- Many `.validate()` methods exist
+- Only 15 test calls to `.validate()`
+
+**Issue**: Validation is critical for catching misconfigurations early.
+
+**Recommended Tests**:
+```python
+# tests/unit/test_validation_comprehensive.py (NEW FILE)
+
+def test_topology_validation_catches_negative_b2():
+    """Test TopologyConfig.validate() rejects negative b₂."""
+    topology = TopologyConfig(b2=-5, b3=20)
+    with pytest.raises(ValueError, match="non-negative"):
+        topology.validate()
+
+def test_topology_validation_catches_nonzero_b1():
+    """Test TopologyConfig.validate() warns about b₁ ≠ 0."""
+    topology = TopologyConfig(b2=21, b3=77, b1=1)
+    with pytest.raises(ValueError, match="simply connected"):
+        topology.validate()
+
+def test_tcs_parameters_validation_catches_invalid_neck_width():
+    """Test TCSParameters.validate() rejects neck_width outside (0,1)."""
+    tcs = TCSParameters(b2_m1=11, b3_m1=40, b2_m2=10, b3_m2=37, neck_width=1.5)
+    with pytest.raises(ValueError, match="Neck width"):
+        tcs.validate()
+
+def test_manifold_config_validation_catches_dimension_mismatch():
+    """Test ManifoldConfig.validate() requires dimension=7."""
+    # Need to construct config with wrong dimension
+    pass
+
+def test_manifold_config_validation_catches_tcs_topology_mismatch():
+    """Test that TCS topology must match sum of components."""
+    topology = TopologyConfig(b2=30, b3=80)  # Mismatch!
+    tcs = TCSParameters(b2_m1=11, b3_m1=40, b2_m2=10, b3_m2=37)  # Sums to 21, 77
+    
+    config = ManifoldConfig(
+        type="K7", 
+        construction="TCS",
+        topology=topology,
+        tcs_params=tcs
+    )
+    
+    with pytest.raises(ValueError, match="topology mismatch"):
+        config.validate()
+```
+
+**Priority**: MEDIUM (validation prevents bugs, should be thoroughly tested)
+
+---
+
+### 8. **Factory Function Edge Cases** 🟢 LOW
+
+**Current Status**:
+- 72 uses of `create_manifold()` factory
+- Could use more edge case testing
+
+**Recommended Tests**:
+```python
+# tests/unit/test_factory_functions.py (NEW FILE)
+
+def test_create_manifold_rejects_unknown_type():
+    """Test create_manifold() raises for unknown manifold type."""
+    config = ManifoldConfig(
+        type="UnknownManifold",
+        construction="Custom",
+        topology=TopologyConfig(b2=5, b3=20)
+    )
+    
+    with pytest.raises(ValueError, match="Unknown manifold type"):
+        create_manifold(config)
+
+def test_create_k7_config_factory():
+    """Test create_k7_config() factory function."""
+    config = create_k7_config(b2_m1=11, b3_m1=40, b2_m2=10, b3_m2=37)
+    assert config.manifold.type == "K7"
+    assert config.manifold.topology.b2 == 21
+    assert config.manifold.topology.b3 == 77
+
+def test_from_gift_v1_0_factory():
+    """Test G2ForgeConfig.from_gift_v1_0() factory."""
+    config = G2ForgeConfig.from_gift_v1_0()
+    assert config.manifold.topology.b2 == 21
+    assert config.manifold.topology.b3 == 77
+```
+
+**Priority**: LOW (factories work well, minor additions useful)
+
+---
+
+### 9. **Integration Tests for End-to-End Workflows** 🟡 MEDIUM
+
+**Current Status**:
+- 6 integration test files, 2,392 lines
+- Good coverage of main workflows
+
+**Recommended Additions**:
+```python
+# tests/integration/test_config_to_results_pipeline.py (NEW FILE)
+
+def test_complete_pipeline_from_config_file():
+    """Test loading config from file and running full training."""
+    # Load config from JSON/YAML
+    # Create trainer
+    # Train for few epochs
+    # Validate results
+    pass
+
+def test_pipeline_with_checkpoint_resume():
+    """Test training, interrupting, and resuming from checkpoint."""
+    # Train for 100 epochs
+    # Save checkpoint
+    # Create new trainer
+    # Load checkpoint
+    # Continue training
+    # Verify continuity
+    pass
+
+def test_pipeline_with_different_devices():
+    """Test same config works on CPU and CUDA (if available)."""
+    for device in ['cpu', 'cuda']:
+        if device == 'cuda' and not torch.cuda.is_available():
+            continue
+        config = create_k7_config(...)
+        trainer = Trainer(config, device=device)
+        results = trainer.train(num_epochs=10)
+        assert results is not None
+```
+
+**Priority**: MEDIUM (integration tests prevent regressions)
+
+---
+
+### 10. **Performance Regression Tests** 🟢 LOW
+
+**Current Status**:
+- Performance tests exist (`tests/performance/test_benchmarks.py`)
+- Could add regression tracking
+
+**Recommended Additions**:
+```python
+# tests/regression/test_performance_tracking.py (ENHANCE EXISTING)
+
+def test_operator_performance_within_tolerance():
+    """Test that core operators maintain performance."""
+    import time
+    
+    coords = torch.randn(1000, 7, requires_grad=True)
+    phi = torch.randn(1000, 7, 7, 7)
+    
+    start = time.time()
+    dphi = compute_exterior_derivative(phi, coords)
+    elapsed = time.time() - start
+    
+    # Should complete in reasonable time
+    assert elapsed < 5.0, f"exterior_derivative too slow: {elapsed:.2f}s"
+
+@pytest.mark.benchmark
+def test_training_step_performance():
+    """Benchmark single training step performance."""
+    # Use pytest-benchmark if available
+    pass
+```
+
+**Priority**: LOW (nice for long-term maintenance)
+
+---
+
+## Summary of Recommendations
+
+### 🔴 HIGH Priority (Do First)
+
+1. **Add base class tests** (`test_manifold_base.py`) - Essential for extensibility
+   - Manifold abstract interface
+   - TCSManifold base class
+   - Cycle dataclass
+
+### 🟡 MEDIUM Priority (Do Soon)
+
+2. **Serialization tests** (`test_config_serialization.py`) - Important for persistence
+3. **Property method tests** (`test_topology_properties.py`) - Verify computed values
+4. **More parametrized tests** - Ensure universality across topologies
+5. **Validation coverage** (`test_validation_comprehensive.py`) - Catch misconfigurations
+6. **FourierFeatures tests** (`test_fourier_features.py`) - Critical network component
+
+### 🟢 LOW Priority (Nice to Have)
+
+7. **Mocking for isolation** - Improve test speed and isolation
+8. **Factory edge cases** - Minor improvements
+9. **More integration tests** - Additional end-to-end workflows
+10. **Performance tracking** - Long-term maintenance
+
+---
+
+## Proposed Test File Structure
 
 ```
 tests/
 ├── unit/
-│   ├── test_operators.py           # 15-20 tests
-│   ├── test_losses.py              # 20-25 tests
-│   ├── test_phi_network.py         # 8-10 tests
-│   ├── test_harmonic_network.py    # 8-10 tests
-│   ├── test_fourier_features.py    # 5-6 tests
-│   ├── test_k7_manifold.py         # 12-15 tests
-│   ├── test_cycles.py              # 5-6 tests
-│   ├── test_topology_config.py     # 8-10 tests
-│   ├── test_tcs_config.py          # 6-8 tests
-│   ├── test_g2forge_config.py      # 10-12 tests
-│   └── test_trainer_components.py  # 8-10 tests
+│   ├── test_manifold_base.py              # NEW - Base class tests
+│   ├── test_config_serialization.py       # NEW - Serialization roundtrips
+│   ├── test_topology_properties.py        # NEW - Property method tests
+│   ├── test_validation_comprehensive.py   # NEW - All validation methods
+│   ├── test_fourier_features.py           # NEW - FourierFeatures component
+│   ├── test_factory_functions.py          # NEW - Factory edge cases
+│   └── [existing files...]
 │
 ├── integration/
-│   ├── test_training_pipeline.py   # 8-10 tests
-│   ├── test_curriculum_learning.py # 5-6 tests
-│   ├── test_checkpointing.py       # 5-6 tests
-│   ├── test_universality.py        # 6-8 tests (KEY!)
-│   └── test_gift_reproduction.py   # 3-5 tests
+│   ├── test_config_to_results_pipeline.py # NEW - Full workflow
+│   └── [existing files...]
 │
-├── regression/
-│   ├── test_numerical_precision.py # 5-8 tests
-│   └── test_deterministic.py       # 3-5 tests
-│
-└── fixtures/
-    ├── conftest.py                 # Pytest fixtures
-    ├── sample_configs.py           # Test configurations
-    ├── analytical_solutions.py     # Known mathematical solutions
-    └── reference_data.py           # Numerical reference values
-```
-
-**Total Proposed Tests**: ~180-220 tests
-
----
-
-## Priority Test Areas
-
-### 🔴 Critical Priority (Must Implement First)
-
-1. **Hodge Star Correctness** (`test_operators.py`)
-   - Test mathematical property: ★★ω = (-1)^{p(7-p)} ω
-   - Known analytical cases
-   - **Risk**: Core G₂ geometry depends on this
-
-2. **Gram Matrix Loss Universality** (`test_losses.py`)
-   - Test with b₂ ∈ {5, 21, 50, 100}
-   - Verify orthonormality enforcement
-   - **Risk**: Key universal feature not validated
-
-3. **Network Antisymmetry** (`test_phi_network.py`, `test_harmonic_network.py`)
-   - PhiNetwork: φ_{ijk} = -φ_{jik}
-   - HarmonicNetwork: ω_{ij} = -ω_{ji}, α_{ijk} = -α_{jik}
-   - **Risk**: Violates differential geometry requirements
-
-4. **Training Gradient Flow** (`test_training_pipeline.py`)
-   - Verify gradients propagate through all operators
-   - Check for gradient explosion/vanishing
-   - **Risk**: Training may fail silently
-
-5. **TCS Topology Consistency** (`test_tcs_config.py`)
-   - Verify b₂ = b₂_m1 + b₂_m2
-   - Verify b₃ = b₃_m1 + b₃_m2
-   - **Risk**: Incorrect manifold construction
-
-### 🟡 High Priority (Implement Soon)
-
-6. **Exterior Derivative** (`test_operators.py`)
-   - Test d(dω) = 0 property
-   - Known analytical examples
-
-7. **Adaptive Loss Scheduler** (`test_losses.py`)
-   - Plateau detection
-   - Safety caps (prevent runaway)
-
-8. **Region Weight Consistency** (`test_k7_manifold.py`)
-   - Verify M₁ + Neck + M₂ ≈ 1
-   - Smoothness properties
-
-9. **Curriculum Phase Transitions** (`test_curriculum_learning.py`)
-   - Verify loss weight changes at boundaries
-   - Phase ordering correctness
-
-10. **Config Serialization** (`test_g2forge_config.py`)
-    - JSON round-trip (save → load → identical)
-    - YAML round-trip
-
-### 🟢 Medium Priority (Nice to Have)
-
-11. **Calibration Losses** (`test_losses.py`)
-12. **Cycle Sampling** (`test_cycles.py`)
-13. **Fourier Features** (`test_fourier_features.py`)
-14. **Checkpointing** (`test_checkpointing.py`)
-15. **Numerical Regression** (`test_numerical_precision.py`)
-
----
-
-## Test Implementation Guidelines
-
-### 1. Unit Test Structure
-
-```python
-import pytest
-import torch
-from g2forge.core import hodge_star_3, build_levi_civita_sparse_7d
-
-def test_hodge_star_double_application():
-    """Test ★★ω = (-1)^{p(7-p)} ω for p=3."""
-    # Setup
-    batch_size = 10
-    phi = torch.randn(batch_size, 7, 7, 7)
-    metric = torch.eye(7).unsqueeze(0).repeat(batch_size, 1, 1)
-    eps_indices, eps_signs = build_levi_civita_sparse_7d()
-
-    # Apply Hodge star twice
-    star_phi = hodge_star_3(phi, metric, eps_indices, eps_signs)
-    star_star_phi = hodge_star_4to3(star_phi, metric, eps_indices, eps_signs)
-
-    # For p=3 in 7D: ★★ω = (-1)^{3(7-3)} ω = (-1)^12 ω = ω
-    expected_sign = (-1) ** (3 * (7 - 3))  # = +1
-
-    # Check
-    torch.testing.assert_close(
-        star_star_phi,
-        expected_sign * phi,
-        rtol=1e-5,
-        atol=1e-6
-    )
-```
-
-### 2. Integration Test Structure
-
-```python
-def test_training_convergence_small_topology():
-    """Test that training converges for small topology (b₂=5, b₃=20)."""
-    # Setup
-    config = g2.create_k7_config(b2_m1=3, b3_m1=10, b2_m2=2, b3_m2=10)
-    trainer = g2.training.Trainer(config, device='cpu', verbose=False)
-
-    # Train for 100 epochs
-    results = trainer.train(num_epochs=100)
-
-    # Check convergence
-    assert results['final_metrics']['loss'] < results['initial_metrics']['loss']
-    assert results['final_metrics']['torsion_closure'] < 1e-2
-    assert results['final_metrics']['rank_h2'] >= 3  # At least partial rank
-    assert results['final_metrics']['rank_h3'] >= 10
-```
-
-### 3. Fixtures (conftest.py)
-
-```python
-import pytest
-import torch
-import g2forge as g2
-
-@pytest.fixture
-def small_topology_config():
-    """Small topology for fast testing."""
-    return g2.create_k7_config(b2_m1=3, b3_m1=10, b2_m2=2, b3_m2=10)
-
-@pytest.fixture
-def gift_config():
-    """GIFT v1.0 configuration."""
-    return g2.G2ForgeConfig.from_gift_v1_0()
-
-@pytest.fixture
-def levi_civita():
-    """Cached Levi-Civita tensor."""
-    return g2.build_levi_civita_sparse_7d()
-
-@pytest.fixture
-def sample_phi():
-    """Sample 3-form for testing."""
-    phi = torch.randn(10, 7, 7, 7)
-    # Antisymmetrize
-    for i in range(7):
-        for j in range(7):
-            for k in range(7):
-                if i < j < k:
-                    phi[:, j, i, k] = -phi[:, i, j, k]
-                    phi[:, k, j, i] = -phi[:, i, j, k]
-                    # ... (all permutations)
-    return phi
+└── [other directories...]
 ```
 
 ---
 
-## Code Coverage Tools
+## Metrics to Track
 
-### Recommended Setup
+Consider adding coverage reporting to CI/CD:
 
 ```bash
-pip install pytest pytest-cov pytest-xdist
-
-# Run tests with coverage
-pytest tests/ --cov=g2forge --cov-report=html --cov-report=term
-
-# Parallel execution (faster)
-pytest tests/ -n auto --cov=g2forge
-
-# Coverage target
-# - Phase 1: Aim for 60% coverage (core operators, losses, networks)
-# - Phase 2: Aim for 75% coverage (add manifolds, config)
-# - Phase 3: Aim for 85% coverage (training, integration)
+pytest tests/ --cov=g2forge --cov-report=html --cov-report=term-missing
 ```
+
+**Target Coverage Goals**:
+- Line coverage: >90% (currently estimated ~85%)
+- Branch coverage: >80%
+- All public APIs: 100%
 
 ---
 
-## Specific Test Examples
+## Conclusion
 
-### Example 1: Levi-Civita Correctness
+The g2-forge codebase has **excellent test coverage overall** (1.6:1 ratio, 573 tests). The main gaps are in:
+1. Abstract base classes (extensibility layer)
+2. Serialization/persistence
+3. Property methods
+4. Cross-topology parametrization
 
-```python
-def test_levi_civita_sign_correctness():
-    """Test that Levi-Civita signs are correct for known permutations."""
-    indices, signs = build_levi_civita_sparse_7d()
-
-    # Identity permutation [0,1,2,3,4,5,6] → +1
-    identity_idx = ((indices == torch.arange(7)).all(dim=1)).nonzero()[0]
-    assert signs[identity_idx] == 1.0
-
-    # Single swap [1,0,2,3,4,5,6] → -1
-    swap_perm = torch.tensor([1, 0, 2, 3, 4, 5, 6])
-    swap_idx = ((indices == swap_perm).all(dim=1)).nonzero()[0]
-    assert signs[swap_idx] == -1.0
-
-    # Double swap [1,0,3,2,4,5,6] → +1
-    double_swap = torch.tensor([1, 0, 3, 2, 4, 5, 6])
-    double_idx = ((indices == double_swap).all(dim=1)).nonzero()[0]
-    assert signs[double_idx] == 1.0
-```
-
-### Example 2: Gram Matrix Universality
-
-```python
-@pytest.mark.parametrize("b2,b3", [
-    (5, 20),
-    (21, 77),  # GIFT
-    (50, 150),
-])
-def test_gram_matrix_loss_universality(b2, b3):
-    """Test gram matrix loss works for different topologies."""
-    topology = TopologyConfig(b2=b2, b3=b3)
-
-    # Generate orthonormal forms
-    batch_size = 100
-    n_components = 21  # For 2-forms in 7D
-    harmonic_forms = torch.randn(batch_size, b2, n_components)
-
-    # Orthonormalize (Gram-Schmidt)
-    # ... (implementation)
-
-    # Compute loss
-    loss, det, rank = gram_matrix_loss(harmonic_forms, target_rank=b2)
-
-    # Should be low loss for orthonormal forms
-    assert loss < 1e-2
-    assert abs(det - 1.0) < 0.1
-    assert rank == b2
-```
-
-### Example 3: Network Antisymmetry
-
-```python
-def test_phi_network_antisymmetry():
-    """Test that PhiNetwork output is antisymmetric."""
-    config = g2.G2ForgeConfig.from_gift_v1_0()
-    phi_net = g2.networks.create_phi_network_from_config(config)
-
-    coords = torch.randn(10, 7)
-    phi_tensor = phi_net.get_phi_tensor(coords)  # [10, 7, 7, 7]
-
-    # Check antisymmetry: φ_{ijk} = -φ_{jik}
-    for i in range(7):
-        for j in range(7):
-            for k in range(7):
-                if i != j and i != k and j != k:
-                    torch.testing.assert_close(
-                        phi_tensor[:, i, j, k],
-                        -phi_tensor[:, j, i, k],
-                        rtol=1e-5, atol=1e-6
-                    )
-```
-
----
-
-## Summary & Recommendations
-
-### Current State
-- **Test Coverage**: ~15-20%
-- **Test Count**: ~16 tests (mostly smoke/integration)
-- **Missing**: Core operator correctness, loss function validation
-
-### Target State
-- **Test Coverage**: 75-85%
-- **Test Count**: 180-220 tests (unit + integration + regression)
-- **Structure**: Organized test suite with fixtures
-
-### Implementation Roadmap
-
-**Phase 1 (Week 1-2)**: Critical Tests
-- [ ] Hodge star correctness (5 tests)
-- [ ] Exterior derivative (5 tests)
-- [ ] Gram matrix universality (6 tests)
-- [ ] Network antisymmetry (4 tests)
-- [ ] TCS topology validation (4 tests)
-- **Target**: 25 tests, 40% coverage
-
-**Phase 2 (Week 3-4)**: High Priority
-- [ ] Adaptive scheduler (5 tests)
-- [ ] Region weights (6 tests)
-- [ ] Config validation (10 tests)
-- [ ] Curriculum phases (5 tests)
-- [ ] Training gradient flow (4 tests)
-- **Target**: 55 tests total, 60% coverage
-
-**Phase 3 (Week 5-6)**: Integration & Regression
-- [ ] Full pipeline tests (8 tests)
-- [ ] Universality validation (6 tests)
-- [ ] Checkpointing (5 tests)
-- [ ] Numerical regression (6 tests)
-- [ ] GIFT reproduction (3 tests)
-- **Target**: 83 tests total, 75% coverage
-
-**Phase 4 (Ongoing)**: Maintain & Extend
-- [ ] Additional edge cases
-- [ ] Performance benchmarks
-- [ ] Coverage: 85%+
-
-### Key Benefits of Improved Testing
-
-1. **Confidence in Universality**: Verify the framework works for ANY topology
-2. **Correctness Validation**: Ensure differential geometry operators are mathematically correct
-3. **Regression Prevention**: Catch bugs before they reach production
-4. **Documentation**: Tests serve as executable documentation
-5. **Refactoring Safety**: Enable confident code improvements
-6. **Reproducibility**: Validate GIFT v1.0 reproduction claims
-
----
-
-**Bottom Line**: The codebase is well-structured and implements sophisticated mathematics, but has minimal test coverage. Implementing comprehensive tests is **critical** for validating the universal topology support and ensuring correctness of core geometric operators.
+Adding the recommended 6 new test files (~1,000 lines of tests) would bring coverage to near-comprehensive levels and significantly improve confidence in the universality and robustness of the framework.
