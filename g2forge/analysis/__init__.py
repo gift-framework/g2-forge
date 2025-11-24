@@ -1,5 +1,5 @@
 """
-Spectral analysis tools for G‚ metrics.
+Spectral analysis tools for Gâ‚‚ metrics.
 
 Provides tools for:
 - Laplacian spectrum computation

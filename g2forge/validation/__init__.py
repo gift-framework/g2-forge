@@ -1,5 +1,5 @@
 """
-Geometric validation tools for G‚ metrics.
+Geometric validation tools for Gâ‚‚ metrics.
 
 Provides validators for:
 - Ricci-flatness
