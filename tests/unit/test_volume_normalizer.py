@@ -50,12 +50,7 @@ def test_volume_normalizer_custom_target():
 def test_compute_scale_basic(small_topology_config):
     """Test basic scale computation."""
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork()
     normalizer = VolumeNormalizer(target_det=2.0)
@@ -76,12 +71,7 @@ def test_compute_scale_basic(small_topology_config):
 def test_compute_scale_deterministic(small_topology_config):
     """Test that scale computation is deterministic with fixed seed."""
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork()
     normalizer = VolumeNormalizer(target_det=2.0)
@@ -99,12 +89,7 @@ def test_compute_scale_deterministic(small_topology_config):
 def test_compute_scale_sample_size_independence(small_topology_config):
     """Test that scale is consistent across different sample sizes."""
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork()
     normalizer = VolumeNormalizer(target_det=2.0)
@@ -127,12 +112,7 @@ def test_compute_scale_sample_size_independence(small_topology_config):
 def test_normalize_basic(small_topology_config):
     """Test basic normalization workflow."""
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork()
     normalizer = VolumeNormalizer(target_det=2.0)
@@ -162,12 +142,7 @@ def test_normalize_basic(small_topology_config):
 def test_normalize_improves_determinant(small_topology_config):
     """Test that normalization improves determinant accuracy."""
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork()
     normalizer = VolumeNormalizer(target_det=2.0)
@@ -190,12 +165,7 @@ def test_normalize_improves_determinant(small_topology_config):
 def test_normalize_scale_relationship(small_topology_config):
     """Test the 1/7 power relationship for scale factor."""
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork()
     normalizer = VolumeNormalizer(target_det=2.0)
@@ -236,12 +206,7 @@ def test_apply_to_metric_before_normalization():
 def test_apply_to_metric_after_normalization(small_topology_config):
     """Test that apply_to_metric correctly scales metric after normalization."""
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork()
     normalizer = VolumeNormalizer(target_det=2.0)
@@ -291,12 +256,7 @@ def test_apply_to_metric_scales_determinant():
 def test_reset_clears_normalization(small_topology_config):
     """Test that reset clears normalization state."""
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork()
     normalizer = VolumeNormalizer(target_det=2.0)
@@ -395,12 +355,7 @@ def test_apply_to_metric_preserves_symmetry():
 def test_normalize_multiple_calls(small_topology_config):
     """Test that calling normalize multiple times updates state correctly."""
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork()
     normalizer = VolumeNormalizer(target_det=2.0)
@@ -422,12 +377,7 @@ def test_normalize_multiple_calls(small_topology_config):
 def test_different_target_determinants(small_topology_config):
     """Test normalization with different target determinants."""
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork()
 
@@ -449,12 +399,7 @@ def test_different_target_determinants(small_topology_config):
 def test_normalize_verbose_output(small_topology_config, capsys):
     """Test that verbose=True produces output."""
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork()
     normalizer = VolumeNormalizer(target_det=2.0)

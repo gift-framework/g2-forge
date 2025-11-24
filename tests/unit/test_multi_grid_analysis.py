@@ -143,12 +143,7 @@ def test_subsample_coords_values_are_subset():
 def test_compute_multi_grid_rg_quantities_basic(small_topology_config):
     """Test basic multi-grid RG quantity computation."""
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork()
 
@@ -170,12 +165,7 @@ def test_compute_multi_grid_rg_quantities_basic(small_topology_config):
 def test_compute_multi_grid_rg_quantities_finite(small_topology_config):
     """Test that multi-grid RG quantities are finite."""
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork()
     coords_fine = manifold.sample_coordinates(n_samples=64, device='cpu')
@@ -194,12 +184,7 @@ def test_compute_multi_grid_rg_quantities_finite(small_topology_config):
 def test_compute_multi_grid_rg_quantities_range(small_topology_config):
     """Test that multi-grid RG quantities are in expected ranges."""
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork()
     coords_fine = manifold.sample_coordinates(n_samples=64, device='cpu')
@@ -218,12 +203,7 @@ def test_compute_multi_grid_rg_quantities_range(small_topology_config):
 def test_compute_multi_grid_rg_quantities_deterministic(small_topology_config):
     """Test that multi-grid computation is deterministic."""
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork()
 
@@ -250,12 +230,7 @@ def test_compute_multi_grid_rg_quantities_deterministic(small_topology_config):
 def test_compute_multi_grid_rg_quantities_different_resolutions(small_topology_config):
     """Test multi-grid computation with different coarse resolutions."""
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork()
     coords_fine = manifold.sample_coordinates(n_samples=128, device='cpu')
@@ -277,12 +252,7 @@ def test_compute_multi_grid_rg_quantities_different_resolutions(small_topology_c
 def test_compute_multi_grid_rg_quantities_different_sample_sizes(small_topology_config):
     """Test multi-grid computation with different fine grid sizes."""
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork()
 
@@ -302,12 +272,7 @@ def test_compute_multi_grid_averages_fine_and_coarse(small_topology_config):
     """Test that multi-grid output is average of fine and coarse grids."""
     # This is more of an integration test, but tests the averaging logic
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork()
     coords_fine = manifold.sample_coordinates(n_samples=64, device='cpu')
@@ -329,12 +294,7 @@ def test_compute_multi_grid_averages_fine_and_coarse(small_topology_config):
 def test_multi_grid_with_trained_network(small_topology_config):
     """Test multi-grid computation with a partially trained network."""
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork()
 
@@ -375,12 +335,7 @@ def test_multi_grid_with_different_topologies():
     ]
 
     for b2, b3 in topologies:
-        manifold = g2.K7Manifold(
-            b2_m1=b2 // 2,
-            b3_m1=b3 // 2,
-            b2_m2=b2 - b2 // 2,
-            b3_m2=b3 - b3 // 2
-        )
+        manifold = g2.manifolds.create_manifold(config.manifold)
 
         phi_network = g2.PhiNetwork()
         coords_fine = manifold.sample_coordinates(n_samples=64, device='cpu')
@@ -401,12 +356,7 @@ def test_multi_grid_with_different_topologies():
 def test_multi_grid_minimal_samples(small_topology_config):
     """Test multi-grid computation with minimal sample count."""
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork()
 
@@ -425,12 +375,7 @@ def test_multi_grid_minimal_samples(small_topology_config):
 def test_multi_grid_large_sample_count(small_topology_config):
     """Test multi-grid computation with large sample count."""
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork()
 
@@ -450,12 +395,7 @@ def test_multi_grid_large_sample_count(small_topology_config):
 def test_multi_grid_on_cuda(small_topology_config):
     """Test multi-grid computation on CUDA device."""
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork().to('cuda')
     coords_fine = manifold.sample_coordinates(n_samples=64, device='cuda')
@@ -475,12 +415,7 @@ def test_multi_grid_consistency_across_devices(small_topology_config):
         pytest.skip("CUDA not available")
 
     config = small_topology_config
-    manifold = g2.K7Manifold(
-        b2_m1=config.topology.b2 // 2,
-        b3_m1=config.topology.b3 // 2,
-        b2_m2=config.topology.b2 // 2,
-        b3_m2=config.topology.b3 // 2
-    )
+    manifold = g2.manifolds.create_manifold(config.manifold)
 
     phi_network = g2.PhiNetwork()
 
