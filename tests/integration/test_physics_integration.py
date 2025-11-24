@@ -39,7 +39,7 @@ def test_volume_normalizer_with_training(small_topology_config):
         b3_m2=config.topology.b3 // 2
     )
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     normalizer = VolumeNormalizer(target_det=2.0)
 
     # Train for a few steps
@@ -78,7 +78,7 @@ def test_volume_normalization_affects_metric(small_topology_config):
         b3_m2=config.topology.b3 // 2
     )
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     normalizer = VolumeNormalizer(target_det=2.0)
 
     # Normalize
@@ -109,7 +109,7 @@ def test_volume_normalizer_reset_and_reuse(small_topology_config):
         b3_m2=config.topology.b3 // 2
     )
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     normalizer = VolumeNormalizer(target_det=2.0)
 
     # First normalization
@@ -140,7 +140,7 @@ def test_rg_flow_with_multi_grid_analysis(small_topology_config):
         b3_m2=config.topology.b3 // 2
     )
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     rg_flow = RGFlowModule()
 
     # Compute multi-grid RG quantities
@@ -174,7 +174,7 @@ def test_rg_flow_optimization_loop(small_topology_config):
         b3_m2=config.topology.b3 // 2
     )
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     rg_flow = RGFlowModule()
 
     # Optimizer for RG coefficients
@@ -233,7 +233,7 @@ def test_rg_flow_coefficient_gradients(small_topology_config):
         b3_m2=config.topology.b3 // 2
     )
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     rg_flow = RGFlowModule()
 
     # Compute quantities
@@ -281,7 +281,7 @@ def test_complete_physics_workflow(small_topology_config):
     )
 
     # Create components
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     normalizer = VolumeNormalizer(target_det=2.0)
     rg_flow = RGFlowModule()
 
@@ -344,7 +344,7 @@ def test_physics_workflow_with_different_topologies():
             b3_m2=b3 - b3 // 2
         )
 
-        phi_network = g2.PhiNetwork()
+        phi_network = g2.networks.create_phi_network_from_config(config)
         normalizer = VolumeNormalizer(target_det=2.0)
         rg_flow = RGFlowModule()
 
@@ -380,7 +380,7 @@ def test_volume_normalization_improves_validation(small_topology_config):
         b3_m2=config.topology.b3 // 2
     )
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
 
     # Compute initial metric
     coords = manifold.sample_coordinates(n_samples=32, device='cpu')
@@ -425,7 +425,7 @@ def test_rg_flow_monitoring_during_training(small_topology_config):
         b3_m2=config.topology.b3 // 2
     )
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     rg_flow = RGFlowModule()
 
     # Track RG quantities over training
@@ -485,7 +485,7 @@ def test_physics_workflow_on_cuda(small_topology_config):
         b3_m2=config.topology.b3 // 2
     )
 
-    phi_network = g2.PhiNetwork().to('cuda')
+    phi_network = g2.networks.create_phi_network_from_config(config).to('cuda')
     normalizer = VolumeNormalizer(target_det=2.0)
     rg_flow = RGFlowModule().to('cuda')
 
@@ -534,7 +534,7 @@ def test_rg_flow_handles_extreme_inputs():
 def test_volume_normalizer_handles_small_batch():
     """Test volume normalizer with very small batch sizes."""
     manifold = g2.K7Manifold(b2_m1=2, b3_m1=10, b2_m2=3, b3_m2=10)
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     normalizer = VolumeNormalizer(target_det=2.0)
 
     # Very small sample size

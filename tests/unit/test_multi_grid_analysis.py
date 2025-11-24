@@ -145,7 +145,7 @@ def test_compute_multi_grid_rg_quantities_basic(small_topology_config):
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
 
     # Create fine grid coordinates
     coords_fine = manifold.sample_coordinates(n_samples=64, device='cpu')
@@ -167,7 +167,7 @@ def test_compute_multi_grid_rg_quantities_finite(small_topology_config):
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     coords_fine = manifold.sample_coordinates(n_samples=64, device='cpu')
 
     divT_eff, fract_eff = compute_multi_grid_rg_quantities(
@@ -186,7 +186,7 @@ def test_compute_multi_grid_rg_quantities_range(small_topology_config):
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     coords_fine = manifold.sample_coordinates(n_samples=64, device='cpu')
 
     divT_eff, fract_eff = compute_multi_grid_rg_quantities(
@@ -205,7 +205,7 @@ def test_compute_multi_grid_rg_quantities_deterministic(small_topology_config):
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
 
     # Use same coordinates
     torch.manual_seed(42)
@@ -232,7 +232,7 @@ def test_compute_multi_grid_rg_quantities_different_resolutions(small_topology_c
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     coords_fine = manifold.sample_coordinates(n_samples=128, device='cpu')
 
     results = []
@@ -254,7 +254,7 @@ def test_compute_multi_grid_rg_quantities_different_sample_sizes(small_topology_
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
 
     for n_samples in [32, 64, 128]:
         coords_fine = manifold.sample_coordinates(n_samples=n_samples, device='cpu')
@@ -274,7 +274,7 @@ def test_compute_multi_grid_averages_fine_and_coarse(small_topology_config):
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     coords_fine = manifold.sample_coordinates(n_samples=64, device='cpu')
 
     divT_eff, fract_eff = compute_multi_grid_rg_quantities(
@@ -296,7 +296,7 @@ def test_multi_grid_with_trained_network(small_topology_config):
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
 
     # Do a few gradient steps to make network non-trivial
     optimizer = torch.optim.Adam(phi_network.parameters(), lr=1e-3)
@@ -337,7 +337,7 @@ def test_multi_grid_with_different_topologies():
     for b2, b3 in topologies:
         manifold = g2.manifolds.create_manifold(config.manifold)
 
-        phi_network = g2.PhiNetwork()
+        phi_network = g2.networks.create_phi_network_from_config(config)
         coords_fine = manifold.sample_coordinates(n_samples=64, device='cpu')
 
         divT_eff, fract_eff = compute_multi_grid_rg_quantities(
@@ -358,7 +358,7 @@ def test_multi_grid_minimal_samples(small_topology_config):
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
 
     # Very small sample size
     coords_fine = manifold.sample_coordinates(n_samples=8, device='cpu')
@@ -377,7 +377,7 @@ def test_multi_grid_large_sample_count(small_topology_config):
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
 
     # Large sample size
     coords_fine = manifold.sample_coordinates(n_samples=256, device='cpu')
@@ -397,7 +397,7 @@ def test_multi_grid_on_cuda(small_topology_config):
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork().to('cuda')
+    phi_network = g2.networks.create_phi_network_from_config(config).to('cuda')
     coords_fine = manifold.sample_coordinates(n_samples=64, device='cuda')
 
     divT_eff, fract_eff = compute_multi_grid_rg_quantities(
@@ -417,7 +417,7 @@ def test_multi_grid_consistency_across_devices(small_topology_config):
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
 
     # CPU computation
     torch.manual_seed(42)
@@ -428,7 +428,7 @@ def test_multi_grid_consistency_across_devices(small_topology_config):
     )
 
     # CUDA computation
-    phi_network_cuda = g2.PhiNetwork().to('cuda')
+    phi_network_cuda = g2.networks.create_phi_network_from_config(config).to('cuda')
     phi_network_cuda.load_state_dict(phi_network.state_dict())
 
     torch.manual_seed(42)

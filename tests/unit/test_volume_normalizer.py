@@ -52,7 +52,7 @@ def test_compute_scale_basic(small_topology_config):
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     normalizer = VolumeNormalizer(target_det=2.0)
 
     scale = normalizer.compute_scale(
@@ -73,7 +73,7 @@ def test_compute_scale_deterministic(small_topology_config):
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     normalizer = VolumeNormalizer(target_det=2.0)
 
     # Compute twice with same seed
@@ -91,7 +91,7 @@ def test_compute_scale_sample_size_independence(small_topology_config):
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     normalizer = VolumeNormalizer(target_det=2.0)
 
     torch.manual_seed(42)
@@ -114,7 +114,7 @@ def test_normalize_basic(small_topology_config):
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     normalizer = VolumeNormalizer(target_det=2.0)
 
     info = normalizer.normalize(
@@ -144,7 +144,7 @@ def test_normalize_improves_determinant(small_topology_config):
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     normalizer = VolumeNormalizer(target_det=2.0)
 
     info = normalizer.normalize(phi_network, manifold, n_samples=64, device='cpu', verbose=False)
@@ -167,7 +167,7 @@ def test_normalize_scale_relationship(small_topology_config):
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     normalizer = VolumeNormalizer(target_det=2.0)
 
     info = normalizer.normalize(phi_network, manifold, n_samples=64, device='cpu', verbose=False)
@@ -208,7 +208,7 @@ def test_apply_to_metric_after_normalization(small_topology_config):
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     normalizer = VolumeNormalizer(target_det=2.0)
 
     # Perform normalization
@@ -258,7 +258,7 @@ def test_reset_clears_normalization(small_topology_config):
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     normalizer = VolumeNormalizer(target_det=2.0)
 
     # Perform normalization
@@ -357,7 +357,7 @@ def test_normalize_multiple_calls(small_topology_config):
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     normalizer = VolumeNormalizer(target_det=2.0)
 
     # First normalization
@@ -379,7 +379,7 @@ def test_different_target_determinants(small_topology_config):
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
 
     targets = [0.5, 1.0, 2.0, 4.0]
     scales = []
@@ -401,7 +401,7 @@ def test_normalize_verbose_output(small_topology_config, capsys):
     config = small_topology_config
     manifold = g2.manifolds.create_manifold(config.manifold)
 
-    phi_network = g2.PhiNetwork()
+    phi_network = g2.networks.create_phi_network_from_config(config)
     normalizer = VolumeNormalizer(target_det=2.0)
 
     # Normalize with verbose=True
