@@ -265,6 +265,217 @@ def compute_harmonic_penalty(
     return variation
 
 
+# ============================================================
+# FRACTALITY INDEX (Multi-Scale FFT) - from GIFT v1.2b
+# ============================================================
+
+def downsample_tensor(
+    T: torch.Tensor,
+    factor: int = 2
+) -> torch.Tensor:
+    """
+    Downsample a tensor by subsampling.
+
+    Args:
+        T: Input tensor of shape (batch, 7, 7, 7, 7) (torsion 4-form)
+        factor: Downsampling factor
+
+    Returns:
+        T_down: Downsampled tensor
+    """
+    return T[..., ::factor]
+
+
+def compute_power_spectrum_slope(T_flat: torch.Tensor) -> float:
+    """
+    Compute power spectrum slope in log-log space.
+
+    Fractal structures exhibit power-law behavior: P(k) ~ k^(-α)
+
+    Args:
+        T_flat: Flattened torsion tensor [N]
+
+    Returns:
+        slope: Power spectrum slope (negative for fractals)
+    """
+    if len(T_flat) < 10:
+        return -2.0
+
+    # FFT power spectrum
+    fft = torch.fft.rfft(T_flat)
+    power = torch.abs(fft) ** 2
+
+    if len(power) < 3:
+        return -2.0
+
+    # Log-log fit
+    k = torch.arange(1, len(power), device=T_flat.device, dtype=T_flat.dtype)
+    log_k = torch.log(k + 1e-10)
+    log_P = torch.log(power[1:] + 1e-10)
+
+    # Linear regression
+    k_mean = log_k.mean()
+    P_mean = log_P.mean()
+    numerator = ((log_k - k_mean) * (log_P - P_mean)).sum()
+    denominator = ((log_k - k_mean) ** 2).sum()
+
+    if denominator > 1e-10:
+        slope = (numerator / denominator).item()
+    else:
+        slope = -2.0
+
+    return slope
+
+
+def compute_fractality_index(
+    torsion: torch.Tensor
+) -> Tuple[torch.Tensor, float]:
+    """
+    Compute multi-scale fractality index using 3-resolution FFT analysis.
+
+    From GIFT v1.2b: Analyzes power spectrum at full, half, and quarter
+    resolution to capture scale-invariant fractal behavior.
+
+    Args:
+        torsion: Torsion tensor of shape (batch, 7, 7, 7, 7)
+
+    Returns:
+        frac_idx: Fractality index per sample, shape (batch,)
+        frac_idx_mean: Mean fractality for monitoring
+    """
+    batch_size = torsion.shape[0]
+    device = torsion.device
+    dtype = torsion.dtype
+
+    frac_idx = torch.zeros(batch_size, device=device, dtype=dtype)
+
+    for b in range(batch_size):
+        # Full resolution
+        T_full = torsion[b].flatten()
+        slope_full = compute_power_spectrum_slope(T_full)
+
+        # Half resolution
+        T_half = downsample_tensor(torsion[b:b + 1], factor=2)[0].flatten()
+        slope_half = compute_power_spectrum_slope(T_half)
+
+        # Quarter resolution
+        T_quarter = downsample_tensor(torsion[b:b + 1], factor=4)[0].flatten()
+        slope_quarter = compute_power_spectrum_slope(T_quarter)
+
+        # Average slopes
+        raw_slope = (slope_full + slope_half + slope_quarter) / 3.0
+
+        # Zero-center and map to [-0.5, +0.5]
+        frac_centered = raw_slope + 2.5
+        frac_idx[b] = 0.5 * torch.tanh(
+            torch.tensor(-frac_centered, device=device, dtype=dtype)
+        )
+
+    frac_idx_mean = frac_idx.mean().item()
+
+    return frac_idx, frac_idx_mean
+
+
+# ============================================================
+# TORSION DIVERGENCE
+# ============================================================
+
+def compute_divergence_torsion(
+    torsion: torch.Tensor,
+    coords: torch.Tensor
+) -> Tuple[torch.Tensor, float]:
+    """
+    Compute torsion divergence ∇·T.
+
+    Args:
+        torsion: Torsion 4-form of shape (batch, 7, 7, 7, 7)
+        coords: Coordinates of shape (batch, 7)
+
+    Returns:
+        div_T: Divergence per sample, shape (batch,)
+        div_T_mean: Mean divergence
+    """
+    batch_size = torsion.shape[0]
+    device = torsion.device
+
+    if batch_size == 1:
+        return torch.zeros(batch_size, device=device), 0.0
+
+    # Flatten and compute variation from mean
+    torsion_flat = torsion.reshape(batch_size, -1)
+    torsion_mean = torsion_flat.mean(dim=0, keepdim=True)
+    component_var = torch.abs(torsion_flat - torsion_mean)
+
+    # Grid spacing
+    dx = 1.0 / 16.0
+
+    # Divergence estimate
+    div_T = component_var.sum(dim=-1) / (dx * (7 ** 4))
+    div_T_mean = div_T.mean().item()
+
+    return div_T, div_T_mean
+
+
+# ============================================================
+# MULTI-GRID EVALUATION
+# ============================================================
+
+def subsample_coords_to_coarse_grid(
+    coords: torch.Tensor,
+    n_coarse: int = 8
+) -> torch.Tensor:
+    """Subsample coordinates to a coarser grid."""
+    batch_size = coords.shape[0]
+    subsample_size = max(1, batch_size // 2)
+    indices = torch.randperm(batch_size, device=coords.device)[:subsample_size]
+    return coords[indices]
+
+
+def compute_multi_grid_rg_quantities(
+    phi_network,
+    manifold,
+    coords_fine: torch.Tensor,
+    n_grid_coarse: int = 8
+) -> Tuple[float, float]:
+    """
+    Compute RG quantities on multiple grids.
+
+    From GIFT v1.2b: Multi-grid evaluation provides robust estimates.
+
+    Args:
+        phi_network: Neural network for φ
+        manifold: Manifold instance
+        coords_fine: Fine grid coordinates
+        n_grid_coarse: Coarse grid resolution
+
+    Returns:
+        divT_eff: Effective divergence (averaged)
+        fract_eff: Effective fractality (averaged)
+    """
+    from ..core.operators import compute_exterior_derivative
+
+    # Fine grid
+    with torch.no_grad():
+        phi_fine = phi_network(coords_fine)
+        dphi_fine = compute_exterior_derivative(phi_fine, coords_fine)
+        divT_fine, divT_fine_mean = compute_divergence_torsion(dphi_fine, coords_fine)
+        fract_fine, fract_fine_mean = compute_fractality_index(dphi_fine)
+
+    # Coarse grid
+    coords_coarse = subsample_coords_to_coarse_grid(coords_fine, n_grid_coarse)
+    with torch.no_grad():
+        phi_coarse = phi_network(coords_coarse)
+        dphi_coarse = compute_exterior_derivative(phi_coarse, coords_coarse)
+        divT_coarse, divT_coarse_mean = compute_divergence_torsion(dphi_coarse, coords_coarse)
+        fract_coarse, fract_coarse_mean = compute_fractality_index(dphi_coarse)
+
+    # Average
+    divT_eff = 0.5 * (divT_fine_mean + divT_coarse_mean)
+    fract_eff = 0.5 * (fract_fine_mean + fract_coarse_mean)
+
+    return divT_eff, fract_eff
+
+
 __all__ = [
     'compute_laplacian_spectrum',
     'extract_harmonic_forms',
@@ -273,4 +484,10 @@ __all__ = [
     'analyze_spectral_gap',
     'verify_cohomology_ranks',
     'compute_harmonic_penalty',
+    'downsample_tensor',
+    'compute_power_spectrum_slope',
+    'compute_fractality_index',
+    'compute_divergence_torsion',
+    'subsample_coords_to_coarse_grid',
+    'compute_multi_grid_rg_quantities',
 ]

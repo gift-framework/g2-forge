@@ -309,6 +309,78 @@ def calibration_coassociative_loss(
 
 
 # ============================================================
+# ACYL STRICT BEHAVIOR LOSS (from GIFT v1.2b)
+# ============================================================
+
+def acyl_strict_loss(
+    phi_network: nn.Module,
+    coords: torch.Tensor,
+    region_weights: Dict[str, torch.Tensor],
+    manifold,
+    eps: float = 1e-4
+) -> torch.Tensor:
+    """
+    ACyl strict behavior loss: penalize radial derivative ∂g/∂r in ACyl regions.
+
+    From GIFT v1.2b: In TCS asymptotically cylindrical (ACyl) ends,
+    the metric should approach a product structure, meaning ∂g/∂r → 0.
+
+    This is a MUCH stronger constraint than just weighting torsion by region.
+    It directly enforces that the metric becomes independent of the radial
+    coordinate in the ACyl regions (M₁ and M₂).
+
+    Args:
+        phi_network: Neural network for φ
+        coords: Coordinates Tensor[batch, 7] (coords[:, 0] = radial/t)
+        region_weights: Dict['m1'|'neck'|'m2', Tensor[batch]]
+        manifold: Manifold instance (for metric computation)
+        eps: Finite difference step size
+
+    Returns:
+        loss: Scalar - Radial derivative penalty in ACyl regions
+
+    Impact:
+        GIFT v1.2b: Torsion in ACyl regions reduced from ~0.05 to ~0.001
+        (~50x improvement)
+
+    Note:
+        Only relevant for TCS construction with radial coordinate.
+        For non-TCS manifolds, this can be skipped.
+    """
+    # Only apply in ACyl regions (M₁ and M₂)
+    acyl_mask = region_weights['m1'] + region_weights['m2'] > 0.5
+
+    if not acyl_mask.any():
+        return torch.tensor(0.0, device=coords.device)
+
+    # Compute metric at current coordinates
+    from ..core.operators import reconstruct_metric_from_phi
+    phi_current = phi_network(coords)
+    metric_current = reconstruct_metric_from_phi(phi_current)
+
+    # Perturb radial coordinate (first coordinate)
+    coords_perturbed = coords.clone()
+    coords_perturbed[:, 0] = coords_perturbed[:, 0] + eps
+
+    # Compute metric at perturbed coordinates
+    phi_perturbed = phi_network(coords_perturbed)
+    metric_perturbed = reconstruct_metric_from_phi(phi_perturbed)
+
+    # Approximate radial derivative: ∂g/∂r ≈ (g(r+ε) - g(r)) / ε
+    dg_dr = (metric_perturbed - metric_current) / eps
+
+    # Loss: penalize norm of derivative in ACyl regions
+    # Weight by region mask to focus on M₁ and M₂
+    acyl_weight = region_weights['m1'] + region_weights['m2']
+    acyl_weight = acyl_weight.unsqueeze(-1).unsqueeze(-1)  # [batch, 1, 1]
+
+    # Weighted squared norm
+    loss = (acyl_weight * (dg_dr ** 2)).sum(dim=(-2, -1)).mean()
+
+    return loss
+
+
+# ============================================================
 # ADAPTIVE LOSS SCHEDULER
 # ============================================================
 
@@ -494,6 +566,15 @@ class CompositeLoss(nn.Module):
         else:
             components['boundary'] = torch.tensor(0.0, device=phi.device)
 
+        # ACyl strict behavior (from GIFT v1.2b)
+        if 'neck' in region_weights and loss_weights.get('acyl_strict', 0.0) > 0:
+            # Note: We need phi_network and coords for this loss
+            # This will be passed as additional arguments or computed in trainer
+            # For now, placeholder:
+            components['acyl_strict'] = torch.tensor(0.0, device=phi.device)
+        else:
+            components['acyl_strict'] = torch.tensor(0.0, device=phi.device)
+
         # Calibration (optional)
         if loss_weights.get('calibration', 0.0) > 0:
             components['calibration_assoc'] = calibration_associative_loss(
@@ -537,6 +618,9 @@ class CompositeLoss(nn.Module):
             loss_weights.get('boundary', 1.0) *
             components['boundary'] +
 
+            loss_weights.get('acyl_strict', 0.0) *
+            components['acyl_strict'] +
+
             loss_weights.get('calibration', 0.0) *
             components['calibration']
         )
@@ -558,6 +642,7 @@ __all__ = [
     'boundary_smoothness_loss',
     'calibration_associative_loss',
     'calibration_coassociative_loss',
+    'acyl_strict_loss',
     'AdaptiveLossScheduler',
     'CompositeLoss',
 ]

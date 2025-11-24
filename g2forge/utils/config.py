@@ -569,6 +569,157 @@ class G2ForgeConfig:
             version="gift-v1.0-reproduction"
         )
 
+    @classmethod
+    def from_gift_v1_2b(cls) -> 'G2ForgeConfig':
+        """
+        Create configuration matching GIFT v1.2b with enhanced curriculum.
+
+        GIFT v1.2b improvements over v1.0:
+        - More aggressive torsion targeting (0.5 → 2.5 progressive)
+        - ACyl strict loss for radial derivative penalization
+        - Volume normalization at end of phase 2
+        - RG flow calibration in phases 3-5
+        - Stronger multi-phase targeting
+
+        Returns:
+            G2ForgeConfig matching GIFT v1.2b setup
+
+        Reference:
+            GIFT/G2_ML/1_2b/K7_G2_TCS_GIFT_Full_v1_2b.ipynb
+        """
+        # Same manifold as v1.0
+        topology = TopologyConfig(b2=21, b3=77)
+
+        tcs_params = TCSParameters(
+            b2_m1=11, b3_m1=40,
+            b2_m2=10, b3_m2=37,
+            neck_width=0.125,
+            neck_center=0.5,
+            transition_sharpness=10.0
+        )
+
+        moduli = ModuliParameters(params={
+            'K7_r_acyl_cutoff': 10.0,
+            'twist_angle': 1.047  # π/3
+        })
+
+        manifold = ManifoldConfig(
+            type="K7",
+            construction="TCS",
+            topology=topology,
+            tcs_params=tcs_params,
+            moduli=moduli
+        )
+
+        # Same architecture as v1.0
+        architecture = NetworkArchitectureConfig(
+            phi_hidden_dims=[384, 384, 256],
+            phi_n_fourier=32,
+            h2_hidden_dim=128,
+            h2_n_fourier=24,
+            h3_hidden_dim=128,
+            h3_n_fourier=24
+        )
+
+        training = TrainingConfig(
+            total_epochs=10000,  # v1.2b: 5 phases × 2000 epochs
+            batch_size=1024,     # Smaller for stability
+            lr=1e-4,
+            weight_decay=1e-4,
+            grad_clip=1.0,
+            grad_accumulation=4,
+            warmup_epochs=200
+        )
+
+        # GIFT v1.2b curriculum with enhanced weights
+        # Phase 1: TCS Neck - Initial stabilization
+        training.add_phase("phase1_tcs_neck", CurriculumPhaseConfig(
+            epoch_range=(0, 2000),
+            grid_n=16,
+            loss_weights={
+                'torsion_closure': 0.5,      # Reduced initial
+                'torsion_coclosure': 0.5,
+                'volume': 0.5,
+                'gram_h2': 1.0,
+                'gram_h3': 1.0,
+                'boundary': 2.0,             # Focus on neck
+                'acyl_strict': 0.0,          # Not yet
+                'calibration': 0.0
+            }
+        ))
+
+        # Phase 2: ACyl Matching - ACyl strict behavior
+        training.add_phase("phase2_acyl_matching", CurriculumPhaseConfig(
+            epoch_range=(2000, 4000),
+            grid_n=16,
+            loss_weights={
+                'torsion_closure': 0.5,
+                'torsion_coclosure': 0.5,
+                'volume': 0.8,
+                'gram_h2': 1.5,
+                'gram_h3': 1.0,
+                'boundary': 0.5,
+                'acyl_strict': 0.5,          # Enable ACyl strict
+                'calibration': 0.0
+            }
+        ))
+
+        # Phase 3: Cohomology Refinement - Increase torsion weight
+        training.add_phase("phase3_cohomology", CurriculumPhaseConfig(
+            epoch_range=(4000, 6000),
+            grid_n=8,  # Coarse for harmonics
+            loss_weights={
+                'torsion_closure': 1.5,      # Increased
+                'torsion_coclosure': 1.5,
+                'volume': 0.5,
+                'gram_h2': 1.0,
+                'gram_h3': 1.0,
+                'boundary': 0.5,
+                'acyl_strict': 1.0,          # Strengthened
+                'calibration': 0.2           # Begin RG flow
+            }
+        ))
+
+        # Phase 4: Harmonic Extraction - High harmonicity
+        training.add_phase("phase4_harmonic_extraction", CurriculumPhaseConfig(
+            epoch_range=(6000, 8000),
+            grid_n=8,
+            loss_weights={
+                'torsion_closure': 2.5,      # Much stronger
+                'torsion_coclosure': 2.5,
+                'volume': 1.0,
+                'gram_h2': 3.0,              # High harmonicity
+                'gram_h3': 3.0,
+                'boundary': 0.2,
+                'acyl_strict': 1.0,
+                'calibration': 0.5           # Increase RG flow
+            }
+        ))
+
+        # Phase 5: RG Calibration - Final polish
+        training.add_phase("phase5_rg_calibration", CurriculumPhaseConfig(
+            epoch_range=(8000, 10000),
+            grid_n=8,
+            loss_weights={
+                'torsion_closure': 2.5,      # Maintain high
+                'torsion_coclosure': 2.5,
+                'volume': 2.0,               # Strong volume control
+                'gram_h2': 1.0,              # Reduce to avoid overfitting
+                'gram_h3': 1.0,
+                'boundary': 0.1,
+                'acyl_strict': 1.0,
+                'calibration': 3.0           # Maximize RG flow
+            }
+        ))
+
+        return cls(
+            manifold=manifold,
+            architecture=architecture,
+            training=training,
+            seed=42,
+            version="gift-v1.2b-enhanced"
+        )
+
 
 # Convenience function for quick config creation
 def create_k7_config(
