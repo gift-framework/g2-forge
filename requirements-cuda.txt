@@ -31,4 +31,4 @@ torchaudio>=2.0.0,<3.0.0     # Optional: for audio
 -r requirements-core.txt
 
 # CUDA-specific utilities (optional)
-nvidia-ml-py>=11.525.0,<13.0.0  # NVIDIA Management Library Python bindings
+nvidia-ml-py>=11.525.0,<14.0.0  # NVIDIA Management Library Python bindings
