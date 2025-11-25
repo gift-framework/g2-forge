@@ -14,6 +14,7 @@ import torch
 import torch.nn as nn
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
+from torch.cuda.amp import GradScaler, autocast
 from pathlib import Path
 from typing import Dict, Optional, Any
 from tqdm.auto import tqdm
@@ -118,6 +119,12 @@ class Trainer:
         self.checkpoint_dir = Path(config.checkpointing.save_dir)
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
+        # Mixed precision (AMP) setup
+        self.use_amp = config.training.use_amp and self.device.type == 'cuda'
+        self.scaler = GradScaler(enabled=self.use_amp)
+        if self.verbose and self.use_amp:
+            print(f"Mixed-precision (AMP) enabled: ~2x speedup expected")
+
     def _create_scheduler(self):
         """Create learning rate scheduler with warmup."""
         warmup = LinearLR(
@@ -152,7 +159,7 @@ class Trainer:
 
     def train_step(self, epoch: int) -> Dict[str, Any]:
         """
-        Single training step.
+        Single training step with optional mixed-precision (AMP).
 
         Args:
             epoch: Current epoch
@@ -173,60 +180,68 @@ class Trainer:
         )
         coords.requires_grad_(True)
 
-        # Forward pass
-        phi_tensor = self.phi_network.get_phi_tensor(coords)
-        h2_forms = self.h2_network(coords)
-        h3_forms = self.h3_network(coords)
+        # Forward pass with autocast for mixed precision
+        with autocast(enabled=self.use_amp):
+            # Forward pass
+            phi_tensor = self.phi_network.get_phi_tensor(coords)
+            h2_forms = self.h2_network(coords)
+            h3_forms = self.h3_network(coords)
 
-        # Compute geometric quantities
-        dphi = compute_exterior_derivative(
-            phi_tensor,
-            coords,
-            subsample_factor=1  # Can subsample for speed
-        )
+            # Compute geometric quantities
+            dphi = compute_exterior_derivative(
+                phi_tensor,
+                coords,
+                subsample_factor=1  # Can subsample for speed
+            )
 
-        metric = reconstruct_metric_from_phi(phi_tensor)
+            metric = reconstruct_metric_from_phi(phi_tensor)
 
-        star_phi = hodge_star_3(
-            phi_tensor,
-            metric,
-            self.eps_indices,
-            self.eps_signs
-        )
+            star_phi = hodge_star_3(
+                phi_tensor,
+                metric,
+                self.eps_indices,
+                self.eps_signs
+            )
 
-        dstar_phi = compute_coclosure(
-            star_phi,
-            coords,
-            subsample_factor=self.config.training.subsample_coclosure
-        )
+            dstar_phi = compute_coclosure(
+                star_phi,
+                coords,
+                subsample_factor=self.config.training.subsample_coclosure
+            )
 
-        # Region weights (for TCS)
-        region_weights = self.manifold.get_region_weights(coords)
+            # Region weights (for TCS)
+            region_weights = self.manifold.get_region_weights(coords)
 
-        # Compute loss
-        total_loss, components = self.loss_fn(
-            phi=phi_tensor,
-            dphi=dphi,
-            dstar_phi=dstar_phi,
-            star_phi=star_phi,
-            metric=metric,
-            harmonic_h2=h2_forms,
-            harmonic_h3=h3_forms,
-            region_weights=region_weights,
-            loss_weights=loss_weights,
-            epoch=epoch
-        )
+            # Compute loss
+            total_loss, components = self.loss_fn(
+                phi=phi_tensor,
+                dphi=dphi,
+                dstar_phi=dstar_phi,
+                star_phi=star_phi,
+                metric=metric,
+                harmonic_h2=h2_forms,
+                harmonic_h3=h3_forms,
+                region_weights=region_weights,
+                loss_weights=loss_weights,
+                epoch=epoch
+            )
 
-        # Backward pass
+        # Backward pass with gradient scaling for AMP
         self.optimizer.zero_grad()
-        total_loss.backward()
+        self.scaler.scale(total_loss).backward()
+
+        # Unscale before clipping
+        self.scaler.unscale_(self.optimizer)
         torch.nn.utils.clip_grad_norm_(
             list(self.phi_network.parameters()) +
             list(self.h2_network.parameters()) +
             list(self.h3_network.parameters()),
             self.config.training.grad_clip
         )
-        self.optimizer.step()
+
+        # Optimizer step with scaler
+        self.scaler.step(self.optimizer)
+        self.scaler.update()
         self.scheduler.step()
 
         # Metrics
@@ -347,6 +362,7 @@ class Trainer:
             'h3_network': self.h3_network.state_dict(),
             'optimizer': self.optimizer.state_dict(),
             'scheduler': self.scheduler.state_dict(),
+            'scaler': self.scaler.state_dict(),  # AMP scaler state
             'metrics': metrics,
             'metrics_history': self.metrics_history
         }
@@ -377,6 +393,10 @@ class Trainer:
         self.h3_network.load_state_dict(checkpoint['h3_network'])
         self.optimizer.load_state_dict(checkpoint['optimizer'])
         self.scheduler.load_state_dict(checkpoint['scheduler'])
+
+        # Load AMP scaler state if available
+        if 'scaler' in checkpoint:
+            self.scaler.load_state_dict(checkpoint['scaler'])
 
         self.start_epoch = checkpoint['epoch'] + 1
         self.metrics_history = checkpoint.get('metrics_history', [])

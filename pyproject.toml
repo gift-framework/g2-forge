@@ -1,0 +1,141 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "g2-forge"
+version = "0.1.0"
+description = "Universal Neural Construction of G₂ Holonomy Metrics"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Brieuc de La Fourniere", email = "brieuc@bdelaf.com"}
+]
+maintainers = [
+    {name = "Brieuc de La Fourniere", email = "brieuc@bdelaf.com"}
+]
+keywords = [
+    "g2-manifolds",
+    "holonomy",
+    "differential-geometry",
+    "physics-informed-neural-networks",
+    "machine-learning",
+    "pytorch",
+    "string-theory",
+    "m-theory"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.0.0",
+    "numpy>=1.24.0",
+    "scipy>=1.10.0",
+    "tqdm>=4.65.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-xdist>=3.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+]
+notebook = [
+    "jupyter>=1.0.0",
+    "matplotlib>=3.7.0",
+    "seaborn>=0.12.0",
+    "ipywidgets>=8.0.0",
+]
+cuda = [
+    "torch>=2.0.0",  # Will use CUDA version when available
+]
+all = [
+    "g2-forge[dev,notebook]",
+]
+
+[project.urls]
+Homepage = "https://github.com/gift-framework/g2-forge"
+Documentation = "https://gift-framework.github.io/g2-forge/"
+Repository = "https://github.com/gift-framework/g2-forge.git"
+Issues = "https://github.com/gift-framework/g2-forge/issues"
+Changelog = "https://github.com/gift-framework/g2-forge/blob/main/CHANGELOG.md"
+
+[project.scripts]
+g2-forge = "g2forge.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["g2forge*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+  | gift_examples
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+skip_gitignore = true
+skip = ["gift_examples", ".venv"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+    "regression: marks tests as regression tests",
+    "benchmark: marks tests as performance benchmarks",
+]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+exclude = ["gift_examples", "build", "dist"]
+
+[tool.coverage.run]
+source = ["g2forge"]
+omit = ["*/tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
