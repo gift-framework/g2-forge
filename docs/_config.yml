@@ -69,18 +69,8 @@ timezone: UTC
 # Google Analytics (add your tracking ID if needed)
 # google_analytics: UA-XXXXXXXXX-X
 
-# Plugin settings
-plugins:
-  - jekyll-feed
-  - jekyll-seo-tag
-  - jekyll-sitemap
-
-# SEO Tag settings
-twitter:
-  card: summary_large_image
-
-# OpenGraph settings
-logo: /assets/images/logo.png
+# Note: Using static HTML deployment via GitHub Actions (.nojekyll)
+# Jekyll plugins are not used in this configuration
 
 # Project metadata
 project:
