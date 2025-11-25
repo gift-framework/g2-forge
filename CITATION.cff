@@ -1,0 +1,56 @@
+cff-version: 1.2.0
+message: "If you use g2-forge in your research, please cite it as below."
+title: "g2-forge: Universal Neural Construction of G₂ Holonomy Metrics"
+abstract: >-
+  A universal framework for constructing G₂ holonomy metrics on compact
+  7-manifolds using Physics-Informed Neural Networks (PINNs). Unlike
+  previous implementations hardcoded to specific manifolds, g2-forge
+  works for any topology characterized by Betti numbers (b₂, b₃).
+type: software
+authors:
+  - family-names: "de La Fourniere"
+    given-names: "Brieuc"
+    email: "brieuc@bdelaf.com"
+    orcid: ""
+repository-code: "https://github.com/gift-framework/g2-forge"
+url: "https://gift-framework.github.io/g2-forge/"
+license: MIT
+version: "0.1.0"
+date-released: "2025-01-15"
+keywords:
+  - G2-manifolds
+  - exceptional holonomy
+  - differential geometry
+  - physics-informed neural networks
+  - machine learning
+  - PyTorch
+  - string theory
+  - M-theory
+  - Riemannian geometry
+references:
+  - type: article
+    authors:
+      - family-names: "Joyce"
+        given-names: "Dominic"
+    title: "Compact Manifolds with Special Holonomy"
+    year: 2000
+    publisher:
+      name: "Oxford University Press"
+  - type: article
+    authors:
+      - family-names: "Kovalev"
+        given-names: "Alexei"
+    title: "Twisted connected sums and special Riemannian holonomy"
+    year: 2003
+    journal: "Journal für die reine und angewandte Mathematik"
+  - type: article
+    authors:
+      - family-names: "Raissi"
+        given-names: "Maziar"
+      - family-names: "Perdikaris"
+        given-names: "Paris"
+      - family-names: "Karniadakis"
+        given-names: "George E."
+    title: "Physics-informed neural networks: A deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations"
+    year: 2019
+    journal: "Journal of Computational Physics"

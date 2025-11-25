@@ -1,0 +1,34 @@
+# CODEOWNERS file for g2-forge
+# These owners will be requested for review when someone opens a pull request.
+
+# Default owners for everything in the repo
+* @brieuc-dlf
+
+# Core mathematical modules - require careful review
+/g2forge/core/ @brieuc-dlf
+/g2forge/manifolds/ @brieuc-dlf
+/g2forge/validation/ @brieuc-dlf
+
+# Neural network architecture
+/g2forge/networks/ @brieuc-dlf
+
+# Training infrastructure
+/g2forge/training/ @brieuc-dlf
+
+# Configuration system
+/g2forge/utils/ @brieuc-dlf
+
+# Tests
+/tests/ @brieuc-dlf
+
+# Documentation
+*.md @brieuc-dlf
+/docs/ @brieuc-dlf
+
+# CI/CD configuration
+/.github/ @brieuc-dlf
+
+# Package configuration
+setup.py @brieuc-dlf
+pyproject.toml @brieuc-dlf
+requirements*.txt @brieuc-dlf

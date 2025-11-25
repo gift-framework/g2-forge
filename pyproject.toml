@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "g2-forge"
-version = "0.1.0"
+version = "0.1.0-dev"
 description = "Universal Neural Construction of G₂ Holonomy Metrics"
 readme = "README.md"
 license = {text = "MIT"}
@@ -25,7 +25,7 @@ keywords = [
     "m-theory"
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Mathematics",
     "Topic :: Scientific/Engineering :: Physics",
@@ -76,8 +76,9 @@ Repository = "https://github.com/gift-framework/g2-forge.git"
 Issues = "https://github.com/gift-framework/g2-forge/issues"
 Changelog = "https://github.com/gift-framework/g2-forge/blob/main/CHANGELOG.md"
 
-[project.scripts]
-g2-forge = "g2forge.cli:main"
+# CLI entry point - uncomment when g2forge.cli module is implemented
+# [project.scripts]
+# g2-forge = "g2forge.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -139,3 +140,7 @@ exclude_lines = [
     "raise NotImplementedError",
     "if __name__ == .__main__.:",
 ]
+
+[tool.bandit]
+exclude_dirs = ["tests", "gift_examples", "build", "dist"]
+skips = ["B101"]  # Skip assert warnings (used in tests)
