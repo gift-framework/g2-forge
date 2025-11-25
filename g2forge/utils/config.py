@@ -261,6 +261,9 @@ class TrainingConfig:
     warmup_epochs: int = 500
     lr_min: float = 1e-7
 
+    # Mixed-precision training (AMP)
+    use_amp: bool = True  # Enable automatic mixed precision (2x speedup on GPU)
+
     # Subsampling for efficiency
     subsample_coclosure: int = 8
     subsample_harmonic: int = 16

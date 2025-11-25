@@ -300,14 +300,24 @@ def create_manifold(config: ManifoldConfig) -> Manifold:
 
     Raises:
         ValueError: If manifold type is unknown
+
+    Supported manifold types:
+        - "K7": TCS K7 manifold (Kovalev construction)
+        - "Joyce": Joyce construction (resolved orbifold) [STUB]
     """
     # Import here to avoid circular imports
     from .k7 import K7Manifold
+    from .joyce import JoyceManifold
 
     if config.type == "K7":
         return K7Manifold(config)
+    elif config.type == "Joyce":
+        return JoyceManifold(config)
     else:
-        raise ValueError(f"Unknown manifold type: {config.type}")
+        raise ValueError(
+            f"Unknown manifold type: {config.type}. "
+            f"Supported types: 'K7', 'Joyce'"
+        )
 
 
 __all__ = [

@@ -19,14 +19,24 @@ from .k7 import (
     create_custom_k7,
 )
 
+from .joyce import (
+    JoyceManifold,
+    JoyceParameters,
+    create_joyce_config,
+)
+
 __all__ = [
     # Base classes
     'Cycle',
     'Manifold',
     'TCSManifold',
     'create_manifold',
-    # K7 implementation
+    # K7 implementation (TCS)
     'K7Manifold',
     'create_gift_k7',
     'create_custom_k7',
+    # Joyce implementation (resolved orbifold) [STUB]
+    'JoyceManifold',
+    'JoyceParameters',
+    'create_joyce_config',
 ]
